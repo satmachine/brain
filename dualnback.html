@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Dual N-Back Mobile</title>
+    <style>
+        /* Base Reset & Fonts */
+        :root {
+            --bg-color: #1a1a2e;
+            --text-color: #e0e0e0;
+            --accent: #0f3460;
+            --highlight: #e94560;
+            --correct: #2ecc71;
+            --wrong: #e74c3c;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden; /* Prevent scrolling during play */
+        }
+
+        /* Screen Containers */
+        .screen {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            height: 100%;
+            padding: 20px;
+            box-sizing: border-box;
+            transition: opacity 0.3s;
+        }
+        .hidden { display: none !important; }
+
+        /* Typography */
+        h1 { margin-bottom: 10px; font-size: 1.8rem; text-align: center; }
+        h2 { font-size: 1.5rem; margin-bottom: 20px; color: var(--highlight); }
+        p { text-align: center; line-height: 1.5; color: #a0a0a0; max-width: 400px; }
+
+        /* Start Screen Inputs */
+        .settings-group {
+            background: rgba(255,255,255,0.05);
+            padding: 20px;
+            border-radius: 12px;
+            width: 100%;
+            max-width: 300px;
+            margin-bottom: 20px;
+        }
+        .setting-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            font-size: 1.1rem;
+        }
+        .setting-row:last-child { margin-bottom: 0; }
+        input[type="number"] {
+            background: #0f3460;
+            border: 1px solid #333;
+            color: white;
+            padding: 8px;
+            border-radius: 6px;
+            width: 60px;
+            text-align: center;
+            font-size: 1.1rem;
+        }
+
+        /* The Game Grid */
+        #grid-container {
+            width: 100%;
+            max-width: 400px;
+            aspect-ratio: 1; /* Keeps it square */
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            grid-template-rows: repeat(3, 1fr);
+            gap: 8px;
+            margin: 10px 0 20px 0;
+        }
+        .cell {
+            background-color: rgba(255,255,255,0.1);
+            border-radius: 8px;
+            transition: background-color 0.1s;
+        }
+        .cell.active {
+            background-color: var(--highlight);
+            box-shadow: 0 0 15px var(--highlight);
+        }
+
+        /* Buttons */
+        .btn-main {
+            background-color: var(--highlight);
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            font-size: 1.2rem;
+            border-radius: 50px;
+            font-weight: bold;
+            cursor: pointer;
+            width: 100%;
+            max-width: 300px;
+            touch-action: manipulation;
+        }
+        .btn-main:active { opacity: 0.8; transform: scale(0.98); }
+
+        /* Game Controls */
+        .controls-area {
+            display: flex;
+            gap: 15px;
+            width: 100%;
+            max-width: 400px;
+            height: 80px;
+        }
+        .game-btn {
+            flex: 1;
+            background-color: var(--accent);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.1s;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            touch-action: manipulation; /* Prevents double-tap zoom */
+        }
+        .game-btn span { font-size: 0.8rem; opacity: 0.7; font-weight: normal; margin-top: 4px; }
+        
+        /* Stats Bar */
+        #live-stats {
+            margin-top: 10px;
+            font-family: monospace;
+            font-size: 0.9rem;
+            color: #888;
+        }
+
+        /* Results Table */
+        .results-table {
+            width: 100%;
+            max-width: 320px;
+            border-collapse: collapse;
+            margin: 20px 0;
+            background: rgba(255,255,255,0.05);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        .results-table th, .results-table td {
+            padding: 12px;
+            text-align: center;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        .results-table th { background: rgba(0,0,0,0.2); font-weight: 600; }
+        .score-good { color: var(--correct); }
+        .score-bad { color: var(--wrong); }
+
+    </style>
+</head>
+<body>
+
+    <div id="start-screen" class="screen">
+        <h1>Dual N-Back</h1>
+        <p>Improve your working memory.</p>
+        
+        <div class="settings-group">
+            <div class="setting-row">
+                <label for="n-level">N-Level (Back)</label>
+                <input type="number" id="n-level" value="2" min="1" max="5">
+            </div>
+            <div class="setting-row">
+                <label for="total-trials">Total Trials</label>
+                <input type="number" id="total-trials" value="20" min="10" step="5">
+            </div>
+            <div class="setting-row">
+                <label for="speed">Speed (sec)</label>
+                <input type="number" id="speed" value="2.5" min="1" step="0.5">
+            </div>
+        </div>
+
+        <button id="start-btn" class="btn-main">START GAME</button>
+        <p style="font-size: 0.8rem; margin-top: 20px; opacity: 0.6;">Volume must be ON.</p>
+    </div>
+
+    <div id="game-screen" class="screen hidden">
+        <div id="grid-container">
+            <div class="cell" id="c0"></div><div class="cell" id="c1"></div><div class="cell" id="c2"></div>
+            <div class="cell" id="c3"></div><div class="cell" id="c4"></div><div class="cell" id="c5"></div>
+            <div class="cell" id="c6"></div><div class="cell" id="c7"></div><div class="cell" id="c8"></div>
+        </div>
+
+        <div class="controls-area">
+            <button id="pos-btn" class="game-btn">
+                POSITION
+                <span>(Tap Left)</span>
+            </button>
+            <button id="audio-btn" class="game-btn">
+                AUDIO
+                <span>(Tap Right)</span>
+            </button>
+        </div>
+        <div id="live-stats">Trial: 0/20</div>
+    </div>
+
+    <div id="results-screen" class="screen hidden">
+        <h2>Session Complete</h2>
+        
+        <table class="results-table">
+            <thead>
+                <tr>
+                    <th>Type</th>
+                    <th>Accuracy</th>
+                    <th>Score</th>
+                </tr>
+            </thead>
+            <tbody id="results-body">
+                </tbody>
+        </table>
+
+        <div id="final-message" style="margin-bottom: 20px; font-style: italic;"></div>
+
+        <button id="restart-btn" class="btn-main">PLAY AGAIN</button>
+    </div>
+
+    <script>
+        // --- Game State ---
+        const letters = ['A', 'B', 'C', 'D', 'H', 'J', 'K', 'L']; // Distinct sounding letters
+        let history = [];
+        let n = 2;
+        let maxTrials = 20;
+        let trialSpeed = 2500;
+        let currentTrial = 0;
+        let score = { posHit: 0, posMiss: 0, posWrong: 0, audioHit: 0, audioMiss: 0, audioWrong: 0 };
+        let inputState = { pos: false, audio: false };
+        let gameTimer = null;
+        let isPlaying = false;
+
+        // --- DOM Elements ---
+        const startScreen = document.getElementById('start-screen');
+        const gameScreen = document.getElementById('game-screen');
+        const resultsScreen = document.getElementById('results-screen');
+        const cells = document.querySelectorAll('.cell');
+        const statsDisplay = document.getElementById('live-stats');
+        
+        // --- Audio Setup ---
+        // We use a "period" trick and cancel previous speech to stop "Capital A"
+        function speak(text) {
+            window.speechSynthesis.cancel(); 
+            const u = new SpeechSynthesisUtterance(text.toLowerCase() + ".");
+            u.lang = 'en-US';
+            u.rate = 1.2;
+            u.pitch = 1.1; // Slightly higher pitch often sounds clearer
+            window.speechSynthesis.speak(u);
+        }
+
+        // --- Navigation ---
+        function showScreen(screenId) {
+            [startScreen, gameScreen, resultsScreen].forEach(s => s.classList.add('hidden'));
+            document.getElementById(screenId).classList.remove('hidden');
+        }
+
+        // --- Core Game Logic ---
+        function startGame() {
+            // Get Settings
+            n = parseInt(document.getElementById('n-level').value);
+            maxTrials = parseInt(document.getElementById('total-trials').value);
+            trialSpeed = parseFloat(document.getElementById('speed').value) * 1000;
+
+            // Reset State
+            history = [];
+            currentTrial = 0;
+            score = { posHit: 0, posMiss: 0, posWrong: 0, audioHit: 0, audioMiss: 0, audioWrong: 0 };
+            isPlaying = true;
+
+            // Warm up audio for mobile (iOS requires user action to unlock audio context)
+            speak(""); 
+
+            showScreen('game-screen');
+            updateLiveStats();
+            
+            // Small delay before first trial
+            setTimeout(nextTrial, 1000);
+        }
+
+        async function nextTrial() {
+            if (!isPlaying) return;
+
+            // 1. Check missed matches from PREVIOUS trial
+            if (history.length > n) {
+                checkMissedMatches(history.length - 1); // Check the one we just finished responding to
+            }
+
+            // 2. End Game Check
+            if (currentTrial >= maxTrials) {
+                endGame();
+                return;
+            }
+
+            // 3. Reset UI
+            inputState = { pos: false, audio: false };
+            cells.forEach(c => c.classList.remove('active'));
+
+            // 4. Generate New Data
+            const pos = Math.floor(Math.random() * 9);
+            const letter = letters[Math.floor(Math.random() * letters.length)];
+            history.push({ pos, letter });
+
+            // 5. Trigger Stimuli
+            cells[pos].classList.add('active');
+            speak(letter);
+
+            currentTrial++;
+            updateLiveStats();
+
+            // 6. Schedule Next
+            gameTimer = setTimeout(nextTrial, trialSpeed);
+        }
+
+        function handleInput(type) {
+            if (!isPlaying || history.length <= n || inputState[type]) return;
+
+            const currentIndex = history.length - 1;
+            const targetIndex = currentIndex - n;
+            
+            const currentItem = history[currentIndex];
+            const targetItem = history[targetIndex];
+
+            let isMatch = false;
+            if (type === 'pos') isMatch = currentItem.pos === targetItem.pos;
+            if (type === 'audio') isMatch = currentItem.letter === targetItem.letter;
+
+            const btn = type === 'pos' ? document.getElementById('pos-btn') : document.getElementById('audio-btn');
+
+            if (isMatch) {
+                // Correct Hit
+                score[type + 'Hit']++;
+                flashButton(btn, 'var(--correct)');
+            } else {
+                // False Alarm (Pressed when not a match)
+                score[type + 'Wrong']++;
+                flashButton(btn, 'var(--wrong)');
+            }
+
+            inputState[type] = true;
+        }
+
+        function checkMissedMatches(index) {
+            // This runs at the START of the next trial to grade the previous trial
+            if (index < n) return;
+
+            const current = history[index];
+            const target = history[index - n];
+
+            // If it WAS a match, but user didn't press button
+            if (current.pos === target.pos && !inputState.pos) score.posMiss++;
+            if (current.letter === target.letter && !inputState.audio) score.audioMiss++;
+        }
+
+        function endGame() {
+            isPlaying = false;
+            clearTimeout(gameTimer);
+            
+            // Calculate Stats
+            const posTotal = score.posHit + score.posMiss + score.posWrong;
+            const audioTotal = score.audioHit + score.audioMiss + score.audioWrong;
+            
+            // Simple accuracy: Hits / (Hits + Misses + False Alarms)
+            // Or simpler: Hits / (Actual Matches + False Alarms) 
+            // Let's use standard: Correct / Total Opportunities Presented + Penalties
+            
+            // Let's simplify display to just % of matches caught vs errors made
+            const posAcc = Math.round((score.posHit / Math.max(1, (score.posHit + score.posMiss))) * 100);
+            const audioAcc = Math.round((score.audioHit / Math.max(1, (score.audioHit + score.audioMiss))) * 100);
+
+            const tbody = document.getElementById('results-body');
+            tbody.innerHTML = `
+                <tr>
+                    <td><strong>Position</strong></td>
+                    <td class="${posAcc > 70 ? 'score-good' : 'score-bad'}">${posAcc}%</td>
+                    <td>${score.posHit} Hits<br><span style="font-size:0.8em; color:#666">${score.posMiss} Miss, ${score.posWrong} Wrong</span></td>
+                </tr>
+                <tr>
+                    <td><strong>Audio</strong></td>
+                    <td class="${audioAcc > 70 ? 'score-good' : 'score-bad'}">${audioAcc}%</td>
+                    <td>${score.audioHit} Hits<br><span style="font-size:0.8em; color:#666">${score.audioMiss} Miss, ${score.audioWrong} Wrong</span></td>
+                </tr>
+            `;
+
+            let msg = "Keep practicing!";
+            if (posAcc > 80 && audioAcc > 80) msg = "Great job! Try increasing N-Level.";
+            document.getElementById('final-message').innerText = msg;
+
+            showScreen('results-screen');
+        }
+
+        // --- Helpers ---
+        function flashButton(btn, color) {
+            const original = btn.style.backgroundColor;
+            btn.style.backgroundColor = color;
+            setTimeout(() => {
+                btn.style.backgroundColor = ""; // revert to CSS default
+            }, 200);
+        }
+
+        function updateLiveStats() {
+            statsDisplay.innerText = `N: ${n} | Trial: ${currentTrial} / ${maxTrials}`;
+        }
+
+        // --- Event Listeners ---
+        document.getElementById('start-btn').addEventListener('click', startGame);
+        document.getElementById('restart-btn').addEventListener('click', () => showScreen('start-screen'));
+        
+        // Touch events for faster mobile response (vs click)
+        const posBtn = document.getElementById('pos-btn');
+        const audioBtn = document.getElementById('audio-btn');
+
+        posBtn.addEventListener('touchstart', (e) => { e.preventDefault(); handleInput('pos'); });
+        audioBtn.addEventListener('touchstart', (e) => { e.preventDefault(); handleInput('audio'); });
+        
+        // Fallback for desktop clicks
+        posBtn.addEventListener('click', () => handleInput('pos'));
+        audioBtn.addEventListener('click', () => handleInput('audio'));
+
+        // Keyboard Support
+        window.addEventListener('keydown', (e) => {
+            if (isPlaying) {
+                if (e.key.toLowerCase() === 'a' || e.key === 'ArrowLeft') handleInput('pos');
+                if (e.key.toLowerCase() === 'l' || e.key === 'ArrowRight') handleInput('audio');
+            }
+        });
+
+    </script>
+</body>
+</html>
+
