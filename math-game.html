@@ -294,6 +294,7 @@
         let level = 1;
         let streak = 0;
         let currentQuestion = null;
+        let isProcessing = false; // Prevent repeated submissions
 
         const questionBox = document.getElementById('question-box');
         const questionText = document.getElementById('question-text');
@@ -375,11 +376,18 @@
         }
 
         function checkAnswer() {
+            // Prevent repeated scoring for the same question
+            if (isProcessing) {
+                return;
+            }
+
             const userAnswer = parseInt(answerInput.value);
 
             if (isNaN(userAnswer)) {
                 return;
             }
+
+            isProcessing = true;
 
             const isCorrect = userAnswer === currentQuestion.answer;
 
@@ -418,6 +426,7 @@
 
             // Next question after delay
             setTimeout(() => {
+                isProcessing = false;
                 displayQuestion();
             }, 1500);
         }

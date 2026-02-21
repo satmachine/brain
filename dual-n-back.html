@@ -315,10 +315,15 @@
 
         // --- Core Game Logic ---
         function startGame() {
-            // Get Settings
-            n = parseInt(document.getElementById('n-level').value);
-            maxTrials = parseInt(document.getElementById('total-trials').value);
-            trialSpeed = parseFloat(document.getElementById('speed').value) * 1000;
+            // Get Settings with validation and defaults
+            n = parseInt(document.getElementById('n-level').value) || 2;
+            maxTrials = parseInt(document.getElementById('total-trials').value) || 20;
+            trialSpeed = (parseFloat(document.getElementById('speed').value) || 2.5) * 1000;
+
+            // Clamp values to reasonable ranges
+            n = Math.max(1, Math.min(5, n));
+            maxTrials = Math.max(10, Math.min(100, maxTrials));
+            trialSpeed = Math.max(1000, Math.min(5000, trialSpeed));
 
             // Reset State
             history = [];

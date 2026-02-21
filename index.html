@@ -222,14 +222,6 @@
         </div>
     </div>
 
-    <script>
-        // Prevent default on card links and navigate properly
-        document.querySelectorAll('.game-card').forEach(card => {
-            card.addEventListener('click', (e) => {
-                // Allow normal navigation
-                window.location.href = card.getAttribute('href');
-            });
-        });
-    </script>
+    <!-- No JavaScript needed - native anchor navigation handles all interactions (click, Ctrl-click, middle-click, etc.) -->
 </body>
 </html>
