@@ -171,7 +171,11 @@ Before committing changes:
 
 ### Git Workflow (Pull Request Review Process)
 
-**IMPORTANT**: All commits must go through the Pull Request (PR) review process with ChatGPT Codex before merging to main.
+**IMPORTANT**: All commits must go through the Pull Request (PR) review process with **CodeRabbit** (automated code reviewer) before merging to main.
+
+**Note on Tools**:
+- **Claude Code** (Claude Sonnet 4.5) - AI coding assistant that writes code (commit co-author)
+- **CodeRabbit** - Automated PR reviewer that checks code quality and best practices
 
 #### Step-by-Step PR Workflow
 
@@ -229,18 +233,18 @@ Before committing changes:
    - [ ] Checked mobile responsiveness
    - [ ] No console errors
 
-   🤖 Ready for ChatGPT Codex review
+   🤖 Ready for CodeRabbit review
    EOF
    )"
    ```
 
-7. **Wait for ChatGPT Codex Review**:
-   - **Codex will automatically review the PR**
-   - **Good Review**: Codex responds with an emoji (✅, 👍, 🎉, etc.) → PR is approved
-   - **Issues Found**: Codex will leave comments explaining what needs to be fixed
+7. **Wait for CodeRabbit Review**:
+   - **CodeRabbit will automatically review the PR**
+   - **Good Review**: CodeRabbit responds with an emoji (✅, 👍, 🎉, etc.) → PR is approved
+   - **Issues Found**: CodeRabbit will leave comments explaining what needs to be fixed
 
 8. **If Changes Requested**:
-   - Read Codex's comments carefully
+   - Read CodeRabbit's comments carefully
    - Make the requested changes locally
    - Commit and push to the same branch:
      ```bash
@@ -249,12 +253,12 @@ Before committing changes:
      git push
      ```
    - PR updates automatically
-   - Wait for Codex to review again
-   - Repeat until Codex approves (emoji response)
+   - Wait for CodeRabbit to review again
+   - Repeat until CodeRabbit approves (emoji response)
 
 9. **Merge PR (Only After Approval)**:
    ```bash
-   # Once Codex gives emoji approval, you have permission to merge:
+   # Once CodeRabbit gives emoji approval, you have permission to merge:
    gh pr merge --squash --delete-branch
    ```
 
@@ -265,7 +269,7 @@ Before committing changes:
 
 #### PR Review Guidelines
 
-**What ChatGPT Codex Reviews**:
+**What CodeRabbit Reviews**:
 - Code quality and best practices
 - Potential bugs or security issues
 - Performance considerations
@@ -279,12 +283,21 @@ Before committing changes:
 - 🚨 ⚠️ Critical issues flagged = **Do not merge** → Fix immediately
 
 **Important Rules**:
-- ❌ **NEVER** merge without Codex approval (emoji response)
-- ❌ **NEVER** force push to feature branches under review
+- ❌ **NEVER** merge without CodeRabbit approval (emoji response)
+- ❌ **NEVER** use `git push --force` on branches under review
+- ✅ **ALLOWED**: `git push --force-with-lease` after rebasing (safer force-push)
 - ❌ **NEVER** merge main into feature branches (rebase instead if needed)
 - ✅ **ALWAYS** address all comments before requesting re-review
 - ✅ **ALWAYS** test changes locally before pushing
 - ✅ **ALWAYS** delete feature branch after successful merge
+
+**Rebasing Workflow** (when feature branch is behind main):
+```bash
+git fetch origin main
+git rebase origin/main
+# Resolve any conflicts
+git push --force-with-lease  # Safe force-push after rebase
+```
 
 ## Typing Game Implementation Details
 
