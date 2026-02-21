@@ -2,7 +2,7 @@
 
 ## Project Overview
 
-**Focus Games** is a collection of browser-based brain training games designed to improve cognitive abilities including working memory, typing speed, and mental arithmetic. The project emphasizes clean design, educational content, and scientifically-backed training exercises.
+**Focus Games** is a collection of browser-based brain training games designed to improve cognitive abilities including working memory, processing speed, attention control, mental flexibility, and mental arithmetic. The project emphasizes clean design, educational content, and scientifically-backed training exercises based on peer-reviewed research.
 
 **Live Site:** https://focus.satm.io
 **Repository:** https://github.com/satmachine/focus
@@ -21,13 +21,17 @@
 
 ```
 /focus/
-├── index.html              # Main landing page with game cards
-├── typing-game.html        # Typing speed test with classic literature
-├── dual-n-back.html        # Dual N-Back working memory trainer
-├── math-game.html          # Mental arithmetic challenge game
-├── paragraphs.json         # Classic literature excerpts (71 entries)
-├── CNAME                   # Custom domain configuration
-└── CLAUDE.md              # This file - project documentation
+├── index.html                  # Main landing page with game cards
+├── typing-game.html            # Typing speed test with classic literature
+├── dual-n-back.html            # Dual N-Back working memory trainer
+├── math-game.html              # Mental arithmetic challenge game
+├── speed-of-processing.html    # Peripheral vision training
+├── stroop-task.html            # Color-word interference task
+├── cpt-game.html               # Continuous Performance Test
+├── task-switching.html         # Mental flexibility training
+├── paragraphs.json             # Classic literature excerpts (71 entries)
+├── CNAME                       # Custom domain configuration
+└── CLAUDE.md                  # This file - project documentation
 ```
 
 ### File Descriptions
@@ -36,10 +40,14 @@
 - **Purpose**: Landing page showcasing all available brain training games
 - **Design**: Hero section + responsive grid of game cards
 - **Navigation**: Cards link to individual game pages
-- **Games Featured**:
+- **Games Featured** (7 total):
   - Dual N-Back (🧠) - Working memory training
   - Typing Speed Test (⌨️) - WPM tracking with literature
   - Math Challenge (🔢) - Mental arithmetic
+  - Speed of Processing (👁️) - Peripheral vision training
+  - Stroop Task (🎨) - Attention control via color-word interference
+  - Continuous Performance (🎯) - Sustained attention assessment
+  - Task Switching (🔀) - Mental flexibility training
 
 #### `typing-game.html`
 - **Purpose**: Typing speed test with real-time WPM and accuracy tracking
@@ -63,6 +71,35 @@
 - **Operations**: Addition, subtraction, multiplication, division
 - **Features**: Timed challenges, score tracking
 - **Status**: File exists but implementation details not yet documented
+
+#### `speed-of-processing.html`
+- **Purpose**: Peripheral vision training with rapid object identification
+- **Scientific Basis**: ACTIVE study - 20-year research showing 25% dementia risk reduction
+- **Mechanics**: 8-position circular grid, 4 object types (🍎🌟🔵🔶), progressive difficulty (800ms → 300ms display duration)
+- **Stats**: 20 trials, adaptive leveling (every 5 correct), real-time accuracy and streak tracking
+- **localStorage**: highScore, bestAccuracy, fastestAvgRT, levelReached, sessionsPlayed, lastPlayed
+
+#### `stroop-task.html`
+- **Purpose**: Color-word interference task for attention control training
+- **Scientific Basis**: Cambridge studies - improvements comparable to ADHD medications
+- **Mechanics**: Mismatched color words (e.g., "RED" in blue ink), time pressure with countdown, score bonuses for fast responses
+- **Stats**: 30 trials, adaptive leveling (every 6 correct), time limit decreases with level (3s → 1.5s)
+- **localStorage**: highScore, bestAccuracy, bestStreak, fastestAvgRT, levelReached, sessionsPlayed, lastPlayed
+
+#### `cpt-game.html`
+- **Purpose**: Continuous Performance Test for sustained attention assessment
+- **Scientific Basis**: Clinical-grade assessment tool used for ADHD diagnosis
+- **Mechanics**: 150 trials over ~3 minutes, target letter (X) appears 28% of time, measures hits/misses/false alarms/correct rejections
+- **Key Metric**: d-prime (sensitivity) = Z(hit rate) - Z(false alarm rate), using Signal Detection Theory
+- **localStorage**: bestDPrime, bestHitRate, lowestFalseAlarmRate, bestAccuracy, fastestAvgRT, sessionsPlayed, lastPlayed
+
+#### `task-switching.html`
+- **Purpose**: Mental flexibility training with dual-task paradigm
+- **Scientific Basis**: Measures cognitive flexibility via "switch cost" (RT difference between switching vs. repeating tasks)
+- **Mechanics**: Numbers 1-9 with alternating tasks (Parity: Even/Odd vs. Magnitude: Greater/Less than 5), 50% switch trials
+- **Stats**: 60 trials, adaptive leveling (every 8 correct), switch trials worth more points (15 vs 10 base)
+- **Key Metric**: Switch Cost = avgSwitchRT - avgRepeatRT (lower is better)
+- **localStorage**: highScore, lowestSwitchCost, bestAccuracy, bestRepeatRT, bestSwitchRT, levelReached, sessionsPlayed, lastPlayed
 
 #### `paragraphs.json`
 - **Purpose**: Data source for typing game paragraphs
@@ -132,6 +169,66 @@
 - Reduced font sizes and padding
 - Touch-friendly button sizes (min 44px tap targets)
 
+### Data Persistence (localStorage)
+
+**Implementation Pattern:**
+
+All 4 research-backed games (Speed of Processing, Stroop, CPT, Task Switching) use localStorage to track personal bests and session history across browser sessions.
+
+**localStorage Keys:**
+- `focus-games-speed-processing`: Speed of Processing game data
+- `focus-games-stroop`: Stroop Task game data
+- `focus-games-cpt`: Continuous Performance Test data
+- `focus-games-task-switching`: Task Switching game data
+
+**Stored Data Structure:**
+
+```javascript
+{
+  // Universal fields (all games)
+  sessionsPlayed: number,
+  lastPlayed: timestamp,
+
+  // Game-specific metrics
+  highScore: number,              // Speed, Stroop, Task Switch
+  bestAccuracy: number,           // All games
+
+  // Speed of Processing
+  fastestAvgRT: number,
+  levelReached: number,
+
+  // Stroop Task
+  bestStreak: number,
+  fastestAvgRT: number,
+  levelReached: number,
+
+  // CPT
+  bestDPrime: number,             // Key metric: sensitivity
+  bestHitRate: number,
+  lowestFalseAlarmRate: number,
+  fastestAvgRT: number,
+
+  // Task Switching
+  lowestSwitchCost: number,       // Key metric: RT difference
+  bestRepeatRT: number,
+  bestSwitchRT: number,
+  levelReached: number
+}
+```
+
+**Display Pattern:**
+
+- Personal bests shown on results screen after each session
+- New records highlighted with 🏆 icon and success color (green)
+- Previous bests shown in muted text if not beaten
+- First-time players see initialized default values
+
+**Privacy:**
+
+- All data stored locally in browser (no server communication)
+- Users can clear data via browser settings
+- No tracking, no cookies, no external requests
+
 ## Development Workflow
 
 ### Local Development
@@ -149,6 +246,10 @@
    http://localhost:8000/typing-game.html
    http://localhost:8000/dual-n-back.html
    http://localhost:8000/math-game.html
+   http://localhost:8000/speed-of-processing.html
+   http://localhost:8000/stroop-task.html
+   http://localhost:8000/cpt-game.html
+   http://localhost:8000/task-switching.html
    ```
 
 3. **Why Local Server?**:
