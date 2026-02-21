@@ -169,21 +169,38 @@ Before committing changes:
 - [ ] Test keyboard navigation and accessibility
 - [ ] Validate HTML/CSS (no syntax errors)
 
-### Git Workflow
+### Git Workflow (Pull Request Review Process)
 
-1. **Check Status**:
+**IMPORTANT**: All commits must go through the Pull Request (PR) review process with **BOTH automated reviewers** before merging to main. More eyes = better code quality.
+
+**Note on Tools**:
+- **Claude Code** (Claude Sonnet 4.5) - AI coding assistant that writes code (commit co-author)
+- **CodeRabbit** - First automated PR reviewer (checks code quality, best practices, security)
+- **ChatGPT Codex** - Second automated PR reviewer (additional perspective and validation)
+
+**Both reviewers must approve before merge!**
+
+#### Step-by-Step PR Workflow
+
+1. **Check Status & Review Changes**:
    ```bash
    git status
    git diff
    ```
 
-2. **Stage Changes**:
+2. **Create Feature Branch**:
    ```bash
-   git add <filename>
-   # Avoid git add . or git add -A to prevent accidental commits
+   git checkout -b feature/descriptive-name
+   # Examples: feature/add-math-game, feature/fix-typing-bug, feature/update-styles
    ```
 
-3. **Commit with Attribution**:
+3. **Stage Changes**:
+   ```bash
+   git add <filename>
+   # Add specific files only - avoid git add . or git add -A to prevent accidental commits
+   ```
+
+4. **Commit with Attribution**:
    ```bash
    git commit -m "$(cat <<'EOF'
    Brief summary of changes
@@ -193,19 +210,109 @@ Before committing changes:
    - Detailed point 3
 
    Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>
-   EOF
+EOF
    )"
    ```
 
-4. **Push to GitHub Pages**:
+5. **Push Feature Branch**:
    ```bash
-   git push
+   git push -u origin feature/descriptive-name
    ```
 
-5. **Verify Deployment**:
-   - Changes go live automatically at https://focus.satm.io
-   - Wait 1-2 minutes for GitHub Pages to rebuild
-   - Hard refresh browser (Cmd+Shift+R or Ctrl+Shift+R)
+6. **Create Pull Request**:
+   ```bash
+   gh pr create --title "Descriptive PR Title" --body "$(cat <<'EOF'
+   ## Summary
+   Brief description of what this PR does
+
+   ## Changes
+   - Change 1
+   - Change 2
+   - Change 3
+
+   ## Testing
+   - [ ] Tested locally
+   - [ ] Verified in multiple browsers
+   - [ ] Checked mobile responsiveness
+   - [ ] No console errors
+
+   🤖 Ready for automated review (CodeRabbit + ChatGPT Codex)
+EOF
+   )"
+   ```
+
+7. **Wait for Automated Reviews**:
+   - **Both CodeRabbit AND ChatGPT Codex will review the PR**
+   - **Approved**: Reviewer submits a formal GitHub "Approved" review (green ✅ checkmark in PR's Reviewers section)
+   - **Issues Found**: Reviewer submits "Changes requested" review and leaves inline comments explaining fixes needed
+   - **IMPORTANT**: Read through ALL comments from both reviewers
+   - **If you have questions**: Respond to comments asking for clarification
+   - **Note**: Review comments may contain emojis, but only formal approval (green ✅ in Reviewers) counts
+
+8. **If Changes Requested (by either reviewer)**:
+   - Read all comments carefully from both CodeRabbit and ChatGPT Codex
+   - If anything is unclear, **reply to the comment asking questions**
+   - Make the requested changes locally
+   - Commit and push to the same branch:
+     ```bash
+     git add <files>
+     git commit -m "Address review feedback: <description>"
+     git push
+     ```
+   - PR updates automatically
+   - Both reviewers will re-review
+   - Repeat until **BOTH reviewers approve** (formal GitHub "Approved" reviews)
+
+9. **Merge PR (Only After BOTH Approvals)**:
+   ```bash
+   # Once BOTH CodeRabbit AND ChatGPT Codex submit formal "Approved" reviews (green ✅ in Reviewers section):
+   gh pr merge --squash --delete-branch
+   ```
+   - ❌ **DO NOT merge with only one approval** - need both ✅
+   - ❌ **DO NOT merge based on emoji comments** - need formal GitHub review approvals
+
+10. **Verify Deployment**:
+    - Changes go live automatically at https://focus.satm.io
+    - Wait 1-2 minutes for GitHub Pages to rebuild
+    - Hard refresh browser (Cmd+Shift+R or Ctrl+Shift+R)
+
+#### PR Review Guidelines
+
+**What CodeRabbit & ChatGPT Codex Review**:
+- Code quality and best practices
+- Potential bugs or security issues
+- Performance considerations
+- Accessibility compliance
+- Consistency with project patterns
+- Documentation completeness
+- Architecture and design decisions
+- Edge cases and error handling
+
+**Response Patterns** (from both reviewers):
+- ✅ **Formal "Approved" review** (green checkmark in Reviewers section) = Reviewer satisfied (need both!)
+- 💬 **Comments with suggestions** = Changes requested → Update PR
+- 🚨 **"Changes requested" review** = Do not merge → Fix issues immediately
+- ❓ **Questions from reviewer** = Respond → Answer or clarify in comment replies
+- 📝 **Note**: Comments may contain emojis (✅, 👍, 🎉), but only **formal GitHub approval reviews** count for merging
+
+**Important Rules**:
+- ❌ **NEVER** merge without formal "Approved" reviews from **BOTH** CodeRabbit AND ChatGPT Codex
+- ❌ **NEVER** use `git push --force` on branches under review
+- ✅ **ALLOWED**: `git push --force-with-lease` after rebasing (safer force-push)
+- ❌ **NEVER** merge main into feature branches (rebase instead if needed)
+- ✅ **ALWAYS** read through all comments from both reviewers
+- ✅ **ALWAYS** respond to comments if you have questions or need clarification
+- ✅ **ALWAYS** address all comments before requesting re-review
+- ✅ **ALWAYS** test changes locally before pushing
+- ✅ **ALWAYS** delete feature branch after successful merge
+
+**Rebasing Workflow** (when feature branch is behind main):
+```bash
+git fetch origin main
+git rebase origin/main
+# Resolve any conflicts
+git push --force-with-lease  # Safe force-push after rebase
+```
 
 ## Typing Game Implementation Details
 
