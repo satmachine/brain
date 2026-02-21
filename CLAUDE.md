@@ -171,14 +171,13 @@ Before committing changes:
 
 ### Git Workflow (Pull Request Review Process)
 
-**IMPORTANT**: All commits must go through the Pull Request (PR) review process with **BOTH automated reviewers** before merging to main. More eyes = better code quality.
+**IMPORTANT**: All commits must go through the Pull Request (PR) review process with **ChatGPT Codex** before merging to main.
 
 **Note on Tools**:
 - **Claude Code** (Claude Sonnet 4.5) - AI coding assistant that writes code (commit co-author)
-- **CodeRabbit** - First automated PR reviewer (checks code quality, best practices, security)
-- **ChatGPT Codex** - Second automated PR reviewer (additional perspective and validation)
+- **ChatGPT Codex** - Automated PR reviewer (checks code quality, bugs, best practices, security)
 
-**Both reviewers must approve before merge!**
+**Codex must approve before merge!**
 
 #### Step-by-Step PR Workflow
 
@@ -236,49 +235,59 @@ EOF
    - [ ] Checked mobile responsiveness
    - [ ] No console errors
 
-   🤖 Ready for automated review (CodeRabbit + ChatGPT Codex)
+   🤖 Ready for ChatGPT Codex review
 EOF
    )"
    ```
 
-7. **Wait for Automated Reviews**:
-   - **Both CodeRabbit AND ChatGPT Codex will review the PR**
-   - **Approved**: Reviewer submits a formal GitHub "Approved" review (green ✅ checkmark in PR's Reviewers section)
-   - **Issues Found**: Reviewer submits "Changes requested" review and leaves inline comments explaining fixes needed
-   - **IMPORTANT**: Read through ALL comments from both reviewers
-   - **If you have questions**: Respond to comments asking for clarification
-   - **Note**: Review comments may contain emojis, but only formal approval (green ✅ in Reviewers) counts
+7. **Request Codex Review**:
+   - **IMPORTANT**: Codex doesn't review automatically - you must tag it
+   - Comment on the PR to trigger review:
+     ```bash
+     gh pr comment <PR-NUMBER> --body "@codex review"
+     ```
+   - Codex will respond within 1-5 minutes
 
-8. **If Changes Requested (by either reviewer)**:
-   - Read all comments carefully from both CodeRabbit and ChatGPT Codex
+8. **Wait for Codex Review**:
+   - **Approved**: Codex comments "Didn't find any major issues" (or similar positive message)
+   - **Issues Found**: Codex leaves inline review comments with specific issues (P1, P2, P3 priority badges)
+   - **IMPORTANT**: Read through ALL inline comments carefully
+   - **If you have questions**: Reply to specific comments asking for clarification
+
+9. **If Changes Requested**:
+   - Read all Codex's inline comments carefully
    - If anything is unclear, **reply to the comment asking questions**
    - Make the requested changes locally
    - Commit and push to the same branch:
      ```bash
      git add <files>
-     git commit -m "Address review feedback: <description>"
+     git commit -m "Address Codex feedback: <description>"
      git push
      ```
    - PR updates automatically
-   - Both reviewers will re-review
-   - Repeat until **BOTH reviewers approve** (formal GitHub "Approved" reviews)
+   - **Request re-review from Codex**:
+     ```bash
+     gh pr comment <PR-NUMBER> --body "@codex I've addressed all feedback. Ready for re-review!"
+     ```
+   - Repeat until Codex approves with "Didn't find any major issues"
 
-9. **Merge PR (Only After BOTH Approvals)**:
-   ```bash
-   # Once BOTH CodeRabbit AND ChatGPT Codex submit formal "Approved" reviews (green ✅ in Reviewers section):
-   gh pr merge --squash --delete-branch
-   ```
-   - ❌ **DO NOT merge with only one approval** - need both ✅
-   - ❌ **DO NOT merge based on emoji comments** - need formal GitHub review approvals
+10. **Merge PR (Only After Codex Approval)**:
+    ```bash
+    # Once Codex says "Didn't find any major issues" or similar positive message:
+    gh pr merge <PR-NUMBER> --squash --delete-branch
+    ```
+    - ✅ **Approval signal**: Codex comments "Didn't find any major issues" / "Hooray!" / "Keep it up!"
+    - ❌ **DO NOT merge** if Codex has unresolved inline comments
+    - ❌ **DO NOT merge** without explicitly tagging @codex for review first
 
-10. **Verify Deployment**:
+11. **Verify Deployment**:
     - Changes go live automatically at https://focus.satm.io
     - Wait 1-2 minutes for GitHub Pages to rebuild
     - Hard refresh browser (Cmd+Shift+R or Ctrl+Shift+R)
 
 #### PR Review Guidelines
 
-**What CodeRabbit & ChatGPT Codex Review**:
+**What ChatGPT Codex Reviews**:
 - Code quality and best practices
 - Potential bugs or security issues
 - Performance considerations
@@ -287,24 +296,37 @@ EOF
 - Documentation completeness
 - Architecture and design decisions
 - Edge cases and error handling
+- Logic errors and unintended behavior
 
-**Response Patterns** (from both reviewers):
-- ✅ **Formal "Approved" review** (green checkmark in Reviewers section) = Reviewer satisfied (need both!)
-- 💬 **Comments with suggestions** = Changes requested → Update PR
-- 🚨 **"Changes requested" review** = Do not merge → Fix issues immediately
-- ❓ **Questions from reviewer** = Respond → Answer or clarify in comment replies
-- 📝 **Note**: Comments may contain emojis (✅, 👍, 🎉), but only **formal GitHub approval reviews** count for merging
+**Codex Response Patterns**:
+- ✅ **"Didn't find any major issues"** = APPROVED - Safe to merge!
+- 📝 **Inline comments with P1/P2/P3 badges** = Issues found - Must fix before merge
+  - P1 (orange) = High priority bug/issue
+  - P2 (yellow) = Medium priority issue
+  - P3 (gray) = Low priority suggestion
+- 💬 **"Useful? React with 👍 / 👎"** = Codex asking if feedback is helpful
+- 🤖 **No response** = Need to tag @codex again to trigger review
+
+**How to Interact with Codex**:
+- Tag `@codex` in a comment to get its attention
+- Use `@codex review` to explicitly request a review
+- Reply to inline comments if you have questions
+- After fixing issues, tag `@codex` again to request re-review
+- Be patient - Codex may take 1-5 minutes to respond
 
 **Important Rules**:
-- ❌ **NEVER** merge without formal "Approved" reviews from **BOTH** CodeRabbit AND ChatGPT Codex
+- ❌ **NEVER** merge without Codex approval ("Didn't find any major issues" message)
+- ❌ **NEVER** merge if Codex has left unresolved inline comments
 - ❌ **NEVER** use `git push --force` on branches under review
 - ✅ **ALLOWED**: `git push --force-with-lease` after rebasing (safer force-push)
 - ❌ **NEVER** merge main into feature branches (rebase instead if needed)
-- ✅ **ALWAYS** read through all comments from both reviewers
+- ✅ **ALWAYS** tag @codex to request review (it doesn't happen automatically)
+- ✅ **ALWAYS** read through all inline comments carefully
 - ✅ **ALWAYS** respond to comments if you have questions or need clarification
 - ✅ **ALWAYS** address all comments before requesting re-review
+- ✅ **ALWAYS** tag @codex again after pushing fixes to trigger re-review
 - ✅ **ALWAYS** test changes locally before pushing
-- ✅ **ALWAYS** delete feature branch after successful merge
+- ✅ **ALWAYS** delete feature branch after successful merge (done automatically with --delete-branch)
 
 **Rebasing Workflow** (when feature branch is behind main):
 ```bash
