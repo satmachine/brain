@@ -293,6 +293,7 @@
         let score = 0;
         let level = 1;
         let streak = 0;
+        let totalCorrect = 0; // Track total correct answers for level progression
         let currentQuestion = null;
         let isProcessing = false; // Prevent repeated submissions
 
@@ -395,13 +396,14 @@
                 // Correct answer
                 score += (10 * level);
                 streak++;
+                totalCorrect++;
 
                 feedback.textContent = '✓ Correct!';
                 feedback.className = 'feedback correct';
                 flashBackground(true);
 
-                // Level up every 5 correct answers
-                if (streak > 0 && streak % 5 === 0) {
+                // Level up every 5 correct answers (based on total, not streak)
+                if (totalCorrect > 0 && totalCorrect % 5 === 0) {
                     level = Math.min(level + 1, 8);
                     levelDisplay.textContent = level;
 
