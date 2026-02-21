@@ -477,6 +477,7 @@
         let trialStartTime = null;
         let timerInterval = null;
         let timeRemaining = 0;
+        let timeoutIds = [];
 
         // localStorage functions
         function getDefaultProgress() {
@@ -523,6 +524,11 @@
                 pbElement.innerHTML = `Personal Best: ${savedProgress.highScore}`;
                 pbElement.style.color = 'var(--text-secondary)';
             }
+        }
+
+        function clearAllTimeouts() {
+            timeoutIds.forEach(id => clearTimeout(id));
+            timeoutIds = [];
         }
 
         // Game functions
@@ -701,12 +707,12 @@
             updateStats();
 
             // Show feedback briefly, then next trial
-            setTimeout(() => {
+            timeoutIds.push(setTimeout(() => {
                 feedbackEl.classList.remove('show');
-                setTimeout(() => {
+                timeoutIds.push(setTimeout(() => {
                     startTrial();
-                }, 100);
-            }, 1000);
+                }, 100));
+            }, 1000));
         }
 
         function handleTimeout() {
@@ -729,17 +735,18 @@
             previousTask = currentTask;
             updateStats();
 
-            setTimeout(() => {
+            timeoutIds.push(setTimeout(() => {
                 feedbackEl.classList.remove('show');
-                setTimeout(() => {
+                timeoutIds.push(setTimeout(() => {
                     startTrial();
-                }, 100);
-            }, 1000);
+                }, 100));
+            }, 1000));
         }
 
         function endGame() {
             isGameActive = false;
             stopTimer();
+            clearAllTimeouts();
 
             const accuracy = Math.round((correctCount / MAX_TRIALS) * 100);
             const avgRepeatRT = repeatRTs.length > 0 ? Math.round(repeatRTs.reduce((a, b) => a + b, 0) / repeatRTs.length) : 0;
@@ -782,13 +789,14 @@
             previousTask = null;
             repeatRTs = [];
             switchRTs = [];
+            clearAllTimeouts();
 
             updateStats();
 
             // Start first trial
-            setTimeout(() => {
+            timeoutIds.push(setTimeout(() => {
                 startTrial();
-            }, 500);
+            }, 500));
         }
 
         // Event listeners
@@ -831,6 +839,11 @@
         // Initialize game on page load
         document.addEventListener('DOMContentLoaded', () => {
             initGame();
+        });
+
+        // Cleanup on page unload
+        window.addEventListener('beforeunload', () => {
+            clearAllTimeouts();
         });
     </script>
 </body>

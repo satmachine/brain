@@ -501,6 +501,7 @@
         let trialStartTime = null;
         let responseGiven = false;
         let trialTimeout = null;
+        let timeoutIds = [];
 
         // localStorage functions
         function getDefaultProgress() {
@@ -547,10 +548,18 @@
             }
         }
 
+        function clearAllTimeouts() {
+            if (trialTimeout) clearTimeout(trialTimeout);
+            timeoutIds.forEach(id => clearTimeout(id));
+            timeoutIds = [];
+        }
+
         // d-prime calculation
         function gaussianInverse(p) {
-            // Approximation of inverse cumulative normal distribution
-            // Using rational approximation by Abramowitz and Stegun
+            // Approximation of inverse cumulative normal distribution (probit function)
+            // Using Abramowitz and Stegun (1964) rational approximation
+            // Required for d-prime calculation in Signal Detection Theory
+            // JavaScript has no native inverse normal CDF function
             const a1 = -3.969683028665376e+01;
             const a2 = 2.209460984245205e+02;
             const a3 = -2.759285104469687e+02;
@@ -670,9 +679,9 @@
             updateStats();
 
             // Hide letter after LETTER_DURATION
-            setTimeout(() => {
+            timeoutIds.push(setTimeout(() => {
                 hideLetter();
-            }, LETTER_DURATION);
+            }, LETTER_DURATION));
 
             // Process trial results after full trial duration (letter + ISI)
             trialTimeout = setTimeout(() => {
@@ -708,14 +717,14 @@
             }
 
             // Start next trial
-            setTimeout(() => {
+            timeoutIds.push(setTimeout(() => {
                 startTrial();
-            }, 100);
+            }, 100));
         }
 
         function endGame() {
             isGameActive = false;
-            if (trialTimeout) clearTimeout(trialTimeout);
+            clearAllTimeouts();
 
             const totalTargets = hits + misses;
             const totalNonTargets = falseAlarms + correctRejections;
@@ -782,13 +791,14 @@
             falseAlarms = 0;
             correctRejections = 0;
             reactionTimes = [];
+            clearAllTimeouts();
 
             updateStats();
 
             // Start first trial
-            setTimeout(() => {
+            timeoutIds.push(setTimeout(() => {
                 startTrial();
-            }, 500);
+            }, 500));
         }
 
         // Event listeners
@@ -809,6 +819,11 @@
         // Initialize countdown on page load
         document.addEventListener('DOMContentLoaded', () => {
             startCountdown();
+        });
+
+        // Cleanup on page unload
+        window.addEventListener('beforeunload', () => {
+            clearAllTimeouts();
         });
     </script>
 </body>
