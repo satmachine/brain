@@ -210,7 +210,7 @@ Before committing changes:
    - Detailed point 3
 
    Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>
-   EOF
+EOF
    )"
    ```
 
@@ -237,7 +237,7 @@ Before committing changes:
    - [ ] No console errors
 
    🤖 Ready for automated review (CodeRabbit + ChatGPT Codex)
-   EOF
+EOF
    )"
    ```
 
