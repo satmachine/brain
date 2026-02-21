@@ -1,0 +1,830 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Continuous Performance Test - Focus Games</title>
+    <style>
+        :root {
+            --bg-dark: #0d0d1a;
+            --bg-light: #1a1a2e;
+            --text-primary: #e2e8f0;
+            --text-secondary: #94a3b8;
+            --accent-purple: #a78bfa;
+            --accent-pink: #e94560;
+            --success: #4ade80;
+            --error: #f87171;
+            --card-bg: rgba(255, 255, 255, 0.05);
+            --card-border: rgba(255, 255, 255, 0.1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background: linear-gradient(135deg, var(--bg-dark) 0%, var(--bg-light) 100%);
+            color: var(--text-primary);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .back-link {
+            display: inline-block;
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 0.9rem;
+            margin-bottom: 20px;
+            transition: color 0.2s;
+        }
+
+        .back-link:hover {
+            color: var(--accent-purple);
+        }
+
+        .container {
+            max-width: 700px;
+            margin: 60px auto 40px;
+            padding: 0 20px;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            background: linear-gradient(135deg, var(--accent-purple), var(--accent-pink));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-align: center;
+        }
+
+        .subtitle {
+            color: var(--text-secondary);
+            text-align: center;
+            font-size: 1rem;
+            margin-bottom: 40px;
+            line-height: 1.6;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+            margin-bottom: 40px;
+        }
+
+        .stat-card {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .stat-label {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            margin-bottom: 8px;
+        }
+
+        .stat-value {
+            color: var(--text-primary);
+            font-size: 1.8rem;
+            font-weight: bold;
+        }
+
+        #countdown-screen {
+            display: block;
+        }
+
+        #game-screen {
+            display: none;
+        }
+
+        #results-screen {
+            display: none;
+        }
+
+        .game-area {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 20px;
+            padding: 80px 40px;
+            margin: 40px 0;
+            min-height: 500px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+
+        .countdown {
+            font-size: 6rem;
+            font-weight: bold;
+            background: linear-gradient(135deg, var(--accent-purple), var(--accent-pink));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: pulse 1s ease-in-out;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.1); opacity: 0.8; }
+        }
+
+        .countdown-message {
+            color: var(--text-secondary);
+            font-size: 1.5rem;
+            margin-top: 20px;
+            text-align: center;
+        }
+
+        .stimulus-letter {
+            font-size: 8rem;
+            font-weight: bold;
+            color: var(--text-primary);
+            font-family: monospace;
+            animation: fadeIn 0.1s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .response-button {
+            position: absolute;
+            bottom: 40px;
+            background: var(--accent-purple);
+            color: white;
+            border: none;
+            padding: 20px 60px;
+            border-radius: 50px;
+            font-size: 1.3rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-transform: uppercase;
+        }
+
+        .response-button:hover {
+            transform: scale(1.05);
+            background: var(--accent-pink);
+        }
+
+        .response-button:active {
+            transform: scale(0.98);
+        }
+
+        .progress-bar-container {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            right: 20px;
+        }
+
+        .progress-label {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            margin-bottom: 8px;
+            text-align: center;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 10px;
+            background: var(--card-border);
+            border-radius: 5px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(135deg, var(--accent-purple), var(--accent-pink));
+            border-radius: 5px;
+            transition: width 0.3s ease;
+        }
+
+        .instruction {
+            color: var(--text-secondary);
+            font-size: 1rem;
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        .btn {
+            background: var(--accent-pink);
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            border-radius: 50px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-weight: 600;
+            margin: 10px;
+        }
+
+        .btn:hover {
+            transform: scale(1.05);
+            background: #ff5070;
+        }
+
+        .btn:active {
+            transform: scale(0.98);
+        }
+
+        .results-screen {
+            text-align: center;
+        }
+
+        .results-title {
+            font-size: 2rem;
+            margin-bottom: 30px;
+            background: linear-gradient(135deg, var(--accent-purple), var(--accent-pink));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .performance-table {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 12px;
+            padding: 30px;
+            margin-bottom: 30px;
+        }
+
+        .table-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 20px;
+            padding: 15px 0;
+            border-bottom: 1px solid var(--card-border);
+        }
+
+        .table-row:last-child {
+            border-bottom: none;
+        }
+
+        .table-row.header {
+            font-weight: bold;
+            color: var(--accent-purple);
+        }
+
+        .table-cell {
+            text-align: center;
+        }
+
+        .results-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 40px;
+        }
+
+        .result-card {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 12px;
+            padding: 25px;
+        }
+
+        .result-label {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            margin-bottom: 10px;
+        }
+
+        .result-value {
+            color: var(--text-primary);
+            font-size: 2rem;
+            font-weight: bold;
+        }
+
+        .result-value.highlight {
+            color: var(--accent-pink);
+            font-size: 2.5rem;
+        }
+
+        .personal-best {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 30px;
+            font-size: 1.1rem;
+        }
+
+        .dprime-info {
+            background: rgba(167, 139, 250, 0.1);
+            border: 1px solid rgba(167, 139, 250, 0.3);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 30px;
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+            line-height: 1.6;
+        }
+
+        .buttons {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                margin-top: 40px;
+            }
+
+            h1 {
+                font-size: 2rem;
+            }
+
+            .stimulus-letter {
+                font-size: 6rem;
+            }
+
+            .countdown {
+                font-size: 4rem;
+            }
+
+            .result-value {
+                font-size: 1.5rem;
+            }
+
+            .result-value.highlight {
+                font-size: 2rem;
+            }
+
+            .table-row {
+                grid-template-columns: 1fr 1fr 1fr;
+                gap: 10px;
+                font-size: 0.9rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <a href="index.html" class="back-link">← Back to Menu</a>
+
+    <div class="container">
+        <h1>🎯 Continuous Performance Test</h1>
+        <p class="subtitle">Measure your sustained attention over 3 minutes. Press the button ONLY when you see the letter X.</p>
+
+        <div id="countdown-screen">
+            <div class="game-area">
+                <div class="countdown" id="countdown-number">3</div>
+                <div class="countdown-message">Get ready to focus...</div>
+            </div>
+        </div>
+
+        <div id="game-screen">
+            <div class="stats">
+                <div class="stat-card">
+                    <div class="stat-label">Hits</div>
+                    <div class="stat-value" id="hits">0</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Misses</div>
+                    <div class="stat-value" id="misses">0</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">False Alarms</div>
+                    <div class="stat-value" id="false-alarms">0</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Trial</div>
+                    <div class="stat-value" id="trial-display">0/150</div>
+                </div>
+            </div>
+
+            <div class="game-area" id="game-area">
+                <div class="progress-bar-container">
+                    <div class="progress-label">Test Progress</div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="progress-fill" style="width: 0%"></div>
+                    </div>
+                </div>
+
+                <div id="stimulus-letter" class="stimulus-letter"></div>
+
+                <button class="response-button" id="response-btn">Respond (Space)</button>
+            </div>
+        </div>
+
+        <div id="results-screen" class="results-screen">
+            <h2 class="results-title">Test Complete!</h2>
+
+            <div id="personal-best" class="personal-best"></div>
+
+            <div class="dprime-info">
+                <strong>d-prime (d'):</strong> A sensitivity measure from Signal Detection Theory. Higher d-prime means better ability to distinguish targets from non-targets. Clinical range: 0-4+, with 2.5+ considered excellent sustained attention.
+            </div>
+
+            <div class="performance-table">
+                <div class="table-row header">
+                    <div class="table-cell">Metric</div>
+                    <div class="table-cell">Count</div>
+                    <div class="table-cell">Percentage</div>
+                </div>
+                <div class="table-row">
+                    <div class="table-cell">Hits</div>
+                    <div class="table-cell" id="final-hits-count">0</div>
+                    <div class="table-cell" id="final-hits-pct">0%</div>
+                </div>
+                <div class="table-row">
+                    <div class="table-cell">Misses</div>
+                    <div class="table-cell" id="final-misses-count">0</div>
+                    <div class="table-cell" id="final-misses-pct">0%</div>
+                </div>
+                <div class="table-row">
+                    <div class="table-cell">False Alarms</div>
+                    <div class="table-cell" id="final-fa-count">0</div>
+                    <div class="table-cell" id="final-fa-pct">0%</div>
+                </div>
+                <div class="table-row">
+                    <div class="table-cell">Correct Rejections</div>
+                    <div class="table-cell" id="final-cr-count">0</div>
+                    <div class="table-cell" id="final-cr-pct">0%</div>
+                </div>
+            </div>
+
+            <div class="results-stats">
+                <div class="result-card">
+                    <div class="result-label">d-prime (d')</div>
+                    <div class="result-value highlight" id="final-dprime">0.00</div>
+                </div>
+                <div class="result-card">
+                    <div class="result-label">Accuracy</div>
+                    <div class="result-value" id="final-accuracy">0%</div>
+                </div>
+                <div class="result-card">
+                    <div class="result-label">Avg RT</div>
+                    <div class="result-value" id="final-rt">0ms</div>
+                </div>
+            </div>
+
+            <div class="buttons">
+                <button class="btn" onclick="location.reload()">Try Again</button>
+                <button class="btn" onclick="location.href='index.html'">Back to Menu</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const STORAGE_KEY = 'focus-games-cpt';
+        const LETTERS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
+        const TARGET_LETTER = 'X';
+        const TARGET_PROBABILITY = 0.28; // ~28% targets
+        const MAX_TRIALS = 150;
+        const LETTER_DURATION = 500; // ms
+        const ISI = 1200; // Inter-stimulus interval
+
+        // Game state
+        let isGameActive = false;
+        let currentTrial = 0;
+        let currentLetter = null;
+        let isTarget = false;
+        let hits = 0;
+        let misses = 0;
+        let falseAlarms = 0;
+        let correctRejections = 0;
+        let reactionTimes = [];
+        let trialStartTime = null;
+        let responseGiven = false;
+        let trialTimeout = null;
+        let timeoutIds = [];
+
+        // localStorage functions
+        function getDefaultProgress() {
+            return {
+                bestDPrime: 0,
+                bestHitRate: 0,
+                lowestFalseAlarmRate: 100,
+                bestAccuracy: 0,
+                fastestAvgRT: Infinity,
+                sessionsPlayed: 0,
+                lastPlayed: null
+            };
+        }
+
+        function loadProgress() {
+            const saved = localStorage.getItem(STORAGE_KEY);
+            return saved ? JSON.parse(saved) : getDefaultProgress();
+        }
+
+        function saveProgress(data) {
+            const current = loadProgress();
+            const updated = {
+                ...current,
+                bestDPrime: Math.max(current.bestDPrime, data.dPrime),
+                bestHitRate: Math.max(current.bestHitRate, data.hitRate),
+                lowestFalseAlarmRate: Math.min(current.lowestFalseAlarmRate, data.falseAlarmRate),
+                bestAccuracy: Math.max(current.bestAccuracy, data.accuracy),
+                fastestAvgRT: Math.min(current.fastestAvgRT === Infinity ? data.avgRT : current.fastestAvgRT, data.avgRT),
+                sessionsPlayed: current.sessionsPlayed + 1,
+                lastPlayed: Date.now()
+            };
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+            return updated;
+        }
+
+        function displayPersonalBest(currentDPrime, savedProgress) {
+            const pbElement = document.getElementById('personal-best');
+            if (currentDPrime > savedProgress.bestDPrime) {
+                pbElement.innerHTML = '🏆 New Personal Best d-prime!';
+                pbElement.style.color = 'var(--success)';
+            } else {
+                pbElement.innerHTML = `Personal Best d-prime: ${savedProgress.bestDPrime.toFixed(2)}`;
+                pbElement.style.color = 'var(--text-secondary)';
+            }
+        }
+
+        function clearAllTimeouts() {
+            if (trialTimeout) clearTimeout(trialTimeout);
+            timeoutIds.forEach(id => clearTimeout(id));
+            timeoutIds = [];
+        }
+
+        // d-prime calculation
+        function gaussianInverse(p) {
+            // Approximation of inverse cumulative normal distribution (probit function)
+            // Using Abramowitz and Stegun (1964) rational approximation
+            // Required for d-prime calculation in Signal Detection Theory
+            // JavaScript has no native inverse normal CDF function
+            const a1 = -3.969683028665376e+01;
+            const a2 = 2.209460984245205e+02;
+            const a3 = -2.759285104469687e+02;
+            const a4 = 1.383577518672690e+02;
+            const a5 = -3.066479806614716e+01;
+            const a6 = 2.506628277459239e+00;
+
+            const b1 = -5.447609879822406e+01;
+            const b2 = 1.615858368580409e+02;
+            const b3 = -1.556989798598866e+02;
+            const b4 = 6.680131188771972e+01;
+            const b5 = -1.328068155288572e+01;
+
+            const c1 = -7.784894002430293e-03;
+            const c2 = -3.223964580411365e-01;
+            const c3 = -2.400758277161838e+00;
+            const c4 = -2.549732539343734e+00;
+            const c5 = 4.374664141464968e+00;
+            const c6 = 2.938163982698783e+00;
+
+            const d1 = 7.784695709041462e-03;
+            const d2 = 3.224671290700398e-01;
+            const d3 = 2.445134137142996e+00;
+            const d4 = 3.754408661907416e+00;
+
+            const pLow = 0.02425;
+            const pHigh = 1 - pLow;
+
+            let q, r, z;
+
+            if (p < pLow) {
+                q = Math.sqrt(-2 * Math.log(p));
+                z = (((((c1 * q + c2) * q + c3) * q + c4) * q + c5) * q + c6) /
+                    ((((d1 * q + d2) * q + d3) * q + d4) * q + 1);
+            } else if (p <= pHigh) {
+                q = p - 0.5;
+                r = q * q;
+                z = (((((a1 * r + a2) * r + a3) * r + a4) * r + a5) * r + a6) * q /
+                    (((((b1 * r + b2) * r + b3) * r + b4) * r + b5) * r + 1);
+            } else {
+                q = Math.sqrt(-2 * Math.log(1 - p));
+                z = -(((((c1 * q + c2) * q + c3) * q + c4) * q + c5) * q + c6) /
+                    ((((d1 * q + d2) * q + d3) * q + d4) * q + 1);
+            }
+
+            return z;
+        }
+
+        function calculateDPrime(hits, misses, falseAlarms, correctRejections) {
+            // Avoid extreme values (0 or 1) by using log-linear correction
+            const totalTargets = hits + misses;
+            const totalNonTargets = falseAlarms + correctRejections;
+
+            let hitRate = hits / totalTargets;
+            let faRate = falseAlarms / totalNonTargets;
+
+            // Apply log-linear correction for extreme values
+            if (hitRate === 1) hitRate = 1 - (1 / (2 * totalTargets));
+            if (hitRate === 0) hitRate = 1 / (2 * totalTargets);
+            if (faRate === 1) faRate = 1 - (1 / (2 * totalNonTargets));
+            if (faRate === 0) faRate = 1 / (2 * totalNonTargets);
+
+            const zHit = gaussianInverse(hitRate);
+            const zFA = gaussianInverse(faRate);
+
+            return zHit - zFA;
+        }
+
+        // Game functions
+        function updateStats() {
+            document.getElementById('hits').textContent = hits;
+            document.getElementById('misses').textContent = misses;
+            document.getElementById('false-alarms').textContent = falseAlarms;
+            document.getElementById('trial-display').textContent = `${currentTrial}/${MAX_TRIALS}`;
+
+            const progress = (currentTrial / MAX_TRIALS) * 100;
+            document.getElementById('progress-fill').style.width = progress + '%';
+        }
+
+        function generateLetter() {
+            const shouldBeTarget = Math.random() < TARGET_PROBABILITY;
+
+            if (shouldBeTarget) {
+                currentLetter = TARGET_LETTER;
+                isTarget = true;
+            } else {
+                // Pick random non-target letter
+                const nonTargets = LETTERS.filter(l => l !== TARGET_LETTER);
+                currentLetter = nonTargets[Math.floor(Math.random() * nonTargets.length)];
+                isTarget = false;
+            }
+        }
+
+        function showLetter() {
+            const letterElement = document.getElementById('stimulus-letter');
+            letterElement.textContent = currentLetter;
+            letterElement.style.opacity = '1';
+        }
+
+        function hideLetter() {
+            const letterElement = document.getElementById('stimulus-letter');
+            letterElement.style.opacity = '0';
+        }
+
+        function startTrial() {
+            if (currentTrial >= MAX_TRIALS) {
+                endGame();
+                return;
+            }
+
+            currentTrial++;
+            responseGiven = false;
+            trialStartTime = Date.now();
+
+            generateLetter();
+            showLetter();
+            updateStats();
+
+            // Hide letter after LETTER_DURATION
+            timeoutIds.push(setTimeout(() => {
+                hideLetter();
+            }, LETTER_DURATION));
+
+            // Process trial results after full trial duration (letter + ISI)
+            trialTimeout = setTimeout(() => {
+                processTrial();
+            }, LETTER_DURATION + ISI);
+        }
+
+        function handleResponse() {
+            if (!isGameActive || responseGiven) return;
+
+            responseGiven = true;
+            const rt = Date.now() - trialStartTime;
+
+            if (isTarget) {
+                hits++;
+                reactionTimes.push(rt);
+            } else {
+                falseAlarms++;
+            }
+
+            updateStats();
+        }
+
+        function processTrial() {
+            // If no response was given
+            if (!responseGiven) {
+                if (isTarget) {
+                    misses++;
+                } else {
+                    correctRejections++;
+                }
+                updateStats();
+            }
+
+            // Start next trial
+            timeoutIds.push(setTimeout(() => {
+                startTrial();
+            }, 100));
+        }
+
+        function endGame() {
+            isGameActive = false;
+            clearAllTimeouts();
+
+            const totalTargets = hits + misses;
+            const totalNonTargets = falseAlarms + correctRejections;
+
+            const hitRate = totalTargets > 0 ? (hits / totalTargets) * 100 : 0;
+            const faRate = totalNonTargets > 0 ? (falseAlarms / totalNonTargets) * 100 : 0;
+            const accuracy = ((hits + correctRejections) / MAX_TRIALS) * 100;
+            const avgRT = reactionTimes.length > 0 ? reactionTimes.reduce((a, b) => a + b, 0) / reactionTimes.length : 0;
+            const dPrime = calculateDPrime(hits, misses, falseAlarms, correctRejections);
+
+            // Save progress
+            const savedProgress = saveProgress({
+                dPrime: dPrime,
+                hitRate: hitRate,
+                falseAlarmRate: faRate,
+                accuracy: accuracy,
+                avgRT: avgRT
+            });
+
+            // Display results
+            document.getElementById('game-screen').style.display = 'none';
+            document.getElementById('results-screen').style.display = 'block';
+
+            // Performance table
+            document.getElementById('final-hits-count').textContent = hits;
+            document.getElementById('final-hits-pct').textContent = hitRate.toFixed(1) + '%';
+            document.getElementById('final-misses-count').textContent = misses;
+            document.getElementById('final-misses-pct').textContent = ((misses / totalTargets) * 100).toFixed(1) + '%';
+            document.getElementById('final-fa-count').textContent = falseAlarms;
+            document.getElementById('final-fa-pct').textContent = faRate.toFixed(1) + '%';
+            document.getElementById('final-cr-count').textContent = correctRejections;
+            document.getElementById('final-cr-pct').textContent = ((correctRejections / totalNonTargets) * 100).toFixed(1) + '%';
+
+            // Summary stats
+            document.getElementById('final-dprime').textContent = dPrime.toFixed(2);
+            document.getElementById('final-accuracy').textContent = accuracy.toFixed(1) + '%';
+            document.getElementById('final-rt').textContent = Math.round(avgRT) + 'ms';
+
+            displayPersonalBest(dPrime, savedProgress);
+        }
+
+        function startCountdown() {
+            let count = 3;
+            const countdownElement = document.getElementById('countdown-number');
+
+            const countdownInterval = setInterval(() => {
+                count--;
+                if (count > 0) {
+                    countdownElement.textContent = count;
+                } else {
+                    clearInterval(countdownInterval);
+                    document.getElementById('countdown-screen').style.display = 'none';
+                    document.getElementById('game-screen').style.display = 'block';
+                    initGame();
+                }
+            }, 1000);
+        }
+
+        function initGame() {
+            isGameActive = true;
+            currentTrial = 0;
+            hits = 0;
+            misses = 0;
+            falseAlarms = 0;
+            correctRejections = 0;
+            reactionTimes = [];
+            clearAllTimeouts();
+
+            updateStats();
+
+            // Start first trial
+            timeoutIds.push(setTimeout(() => {
+                startTrial();
+            }, 500));
+        }
+
+        // Event listeners
+        document.getElementById('response-btn').addEventListener('click', () => {
+            handleResponse();
+        });
+
+        // Keyboard support
+        document.addEventListener('keydown', (e) => {
+            if (!isGameActive) return;
+
+            if (e.key === ' ' || e.code === 'Space') {
+                e.preventDefault();
+                handleResponse();
+            }
+        });
+
+        // Initialize countdown on page load
+        document.addEventListener('DOMContentLoaded', () => {
+            startCountdown();
+        });
+
+        // Cleanup on page unload
+        window.addEventListener('beforeunload', () => {
+            clearAllTimeouts();
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,850 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Task Switching - Focus Games</title>
+    <style>
+        :root {
+            --bg-dark: #0d0d1a;
+            --bg-light: #1a1a2e;
+            --text-primary: #e2e8f0;
+            --text-secondary: #94a3b8;
+            --accent-purple: #a78bfa;
+            --accent-pink: #e94560;
+            --success: #4ade80;
+            --error: #f87171;
+            --card-bg: rgba(255, 255, 255, 0.05);
+            --card-border: rgba(255, 255, 255, 0.1);
+            --badge-repeat: #3b82f6;
+            --badge-switch: #f97316;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background: linear-gradient(135deg, var(--bg-dark) 0%, var(--bg-light) 100%);
+            color: var(--text-primary);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .back-link {
+            display: inline-block;
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 0.9rem;
+            margin-bottom: 20px;
+            transition: color 0.2s;
+        }
+
+        .back-link:hover {
+            color: var(--accent-purple);
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 60px auto 40px;
+            padding: 0 20px;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            background: linear-gradient(135deg, var(--accent-purple), var(--accent-pink));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-align: center;
+        }
+
+        .subtitle {
+            color: var(--text-secondary);
+            text-align: center;
+            font-size: 1rem;
+            margin-bottom: 40px;
+            line-height: 1.6;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+            margin-bottom: 40px;
+        }
+
+        .stat-card {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .stat-label {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            margin-bottom: 8px;
+        }
+
+        .stat-value {
+            color: var(--text-primary);
+            font-size: 1.8rem;
+            font-weight: bold;
+        }
+
+        #game-screen {
+            display: block;
+        }
+
+        #results-screen {
+            display: none;
+        }
+
+        .game-area {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 20px;
+            padding: 60px 40px;
+            margin: 40px 0;
+            min-height: 500px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+
+        .trial-badge {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            padding: 10px 20px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .trial-badge.repeat {
+            background: var(--badge-repeat);
+            color: white;
+        }
+
+        .trial-badge.switch {
+            background: var(--badge-switch);
+            color: white;
+        }
+
+        .timer-circle {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: conic-gradient(var(--accent-purple) 0deg, transparent 0deg);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.1s linear;
+        }
+
+        .timer-text {
+            color: var(--text-primary);
+            font-size: 1.2rem;
+            font-weight: bold;
+        }
+
+        .task-cue {
+            font-size: 1.5rem;
+            color: var(--accent-purple);
+            margin-bottom: 20px;
+            font-weight: bold;
+            text-align: center;
+        }
+
+        .stimulus-number {
+            font-size: 6rem;
+            font-weight: bold;
+            margin: 40px 0;
+            text-align: center;
+            color: var(--text-primary);
+        }
+
+        .answer-buttons {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+            max-width: 500px;
+            width: 100%;
+        }
+
+        .answer-btn {
+            background: var(--card-bg);
+            border: 3px solid var(--accent-purple);
+            color: var(--text-primary);
+            padding: 25px 40px;
+            border-radius: 12px;
+            font-size: 1.3rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .answer-btn:hover {
+            background: rgba(167, 139, 250, 0.2);
+            transform: scale(1.05);
+        }
+
+        .answer-btn:active {
+            transform: scale(0.98);
+        }
+
+        .instruction {
+            color: var(--text-secondary);
+            font-size: 1rem;
+            margin-top: 20px;
+            text-align: center;
+        }
+
+        .feedback {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 2rem;
+            font-weight: bold;
+            opacity: 0;
+            transition: opacity 0.3s;
+            pointer-events: none;
+        }
+
+        .feedback.show {
+            opacity: 1;
+        }
+
+        .feedback.correct {
+            color: var(--success);
+        }
+
+        .feedback.incorrect {
+            color: var(--error);
+        }
+
+        .btn {
+            background: var(--accent-pink);
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            border-radius: 50px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-weight: 600;
+            margin: 10px;
+        }
+
+        .btn:hover {
+            transform: scale(1.05);
+            background: #ff5070;
+        }
+
+        .btn:active {
+            transform: scale(0.98);
+        }
+
+        .results-screen {
+            text-align: center;
+        }
+
+        .results-title {
+            font-size: 2rem;
+            margin-bottom: 30px;
+            background: linear-gradient(135deg, var(--accent-purple), var(--accent-pink));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .results-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 20px;
+            margin-bottom: 40px;
+        }
+
+        .result-card {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 12px;
+            padding: 25px;
+        }
+
+        .result-label {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            margin-bottom: 10px;
+        }
+
+        .result-value {
+            color: var(--text-primary);
+            font-size: 1.8rem;
+            font-weight: bold;
+        }
+
+        .result-value.highlight {
+            color: var(--accent-pink);
+            font-size: 2.2rem;
+        }
+
+        .personal-best {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 30px;
+            font-size: 1.1rem;
+        }
+
+        .buttons {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .switch-cost-info {
+            background: rgba(249, 115, 22, 0.1);
+            border: 1px solid rgba(249, 115, 22, 0.3);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 30px;
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+            line-height: 1.6;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                margin-top: 40px;
+            }
+
+            h1 {
+                font-size: 2rem;
+            }
+
+            .stimulus-number {
+                font-size: 4.5rem;
+            }
+
+            .answer-btn {
+                padding: 20px 30px;
+                font-size: 1.1rem;
+            }
+
+            .result-value {
+                font-size: 1.5rem;
+            }
+
+            .result-value.highlight {
+                font-size: 1.8rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <a href="index.html" class="back-link">← Back to Menu</a>
+
+    <div class="container">
+        <h1>🔀 Task Switching</h1>
+        <p class="subtitle">Build mental flexibility by rapidly switching between parity and magnitude judgments. Train your executive function!</p>
+
+        <div id="game-screen">
+            <div class="stats">
+                <div class="stat-card">
+                    <div class="stat-label">Score</div>
+                    <div class="stat-value" id="score">0</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Level</div>
+                    <div class="stat-value" id="level">1</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Streak</div>
+                    <div class="stat-value" id="streak">0</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Trial</div>
+                    <div class="stat-value" id="trial-display">0/60</div>
+                </div>
+            </div>
+
+            <div class="game-area" id="game-area">
+                <div class="timer-circle" id="timer-circle">
+                    <div class="timer-text" id="timer-text">4.0</div>
+                </div>
+
+                <div class="trial-badge repeat" id="trial-badge">REPEAT</div>
+
+                <div class="task-cue" id="task-cue">EVEN or ODD?</div>
+                <div class="stimulus-number" id="stimulus-number">5</div>
+
+                <div class="answer-buttons" id="answer-buttons">
+                    <button class="answer-btn" id="btn-left">EVEN</button>
+                    <button class="answer-btn" id="btn-right">ODD</button>
+                </div>
+
+                <div class="instruction" id="instruction">Press 1 or 2 (E/O for parity, G/L for magnitude)</div>
+
+                <div class="feedback" id="feedback"></div>
+            </div>
+        </div>
+
+        <div id="results-screen" class="results-screen">
+            <h2 class="results-title">Game Complete!</h2>
+
+            <div id="personal-best" class="personal-best"></div>
+
+            <div class="switch-cost-info">
+                <strong>Switch Cost:</strong> The difference in reaction time between switching tasks vs. repeating the same task. Lower is better! This measures your mental flexibility and cognitive control.
+            </div>
+
+            <div class="results-stats">
+                <div class="result-card">
+                    <div class="result-label">Final Score</div>
+                    <div class="result-value" id="final-score">0</div>
+                </div>
+                <div class="result-card">
+                    <div class="result-label">Accuracy</div>
+                    <div class="result-value" id="final-accuracy">0%</div>
+                </div>
+                <div class="result-card">
+                    <div class="result-label">Repeat RT</div>
+                    <div class="result-value" id="final-repeat-rt">0ms</div>
+                </div>
+                <div class="result-card">
+                    <div class="result-label">Switch RT</div>
+                    <div class="result-value" id="final-switch-rt">0ms</div>
+                </div>
+                <div class="result-card">
+                    <div class="result-label">Switch Cost</div>
+                    <div class="result-value highlight" id="final-switch-cost">0ms</div>
+                </div>
+                <div class="result-card">
+                    <div class="result-label">Best Streak</div>
+                    <div class="result-value" id="final-streak">0</div>
+                </div>
+            </div>
+
+            <div class="buttons">
+                <button class="btn" onclick="location.reload()">Try Again</button>
+                <button class="btn" onclick="location.href='index.html'">Back to Menu</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const STORAGE_KEY = 'focus-games-task-switching';
+        const MAX_TRIALS = 60;
+        const CORRECT_FOR_LEVEL_UP = 8;
+        const TASKS = ['PARITY', 'MAGNITUDE'];
+
+        // Game state
+        let isGameActive = false;
+        let isProcessing = false;
+        let currentTrial = 0;
+        let level = 1;
+        let score = 0;
+        let streak = 0;
+        let bestStreak = 0;
+        let correctCount = 0;
+        let correctSinceLastLevel = 0;
+        let currentTask = null;
+        let previousTask = null;
+        let currentNumber = null;
+        let isSwitchTrial = false;
+        let repeatRTs = [];
+        let switchRTs = [];
+        let trialStartTime = null;
+        let timerInterval = null;
+        let timeRemaining = 0;
+        let timeoutIds = [];
+
+        // localStorage functions
+        function getDefaultProgress() {
+            return {
+                highScore: 0,
+                lowestSwitchCost: Infinity,
+                bestAccuracy: 0,
+                bestRepeatRT: Infinity,
+                bestSwitchRT: Infinity,
+                levelReached: 1,
+                sessionsPlayed: 0,
+                lastPlayed: null
+            };
+        }
+
+        function loadProgress() {
+            const saved = localStorage.getItem(STORAGE_KEY);
+            return saved ? JSON.parse(saved) : getDefaultProgress();
+        }
+
+        function saveProgress(data) {
+            const current = loadProgress();
+            const updated = {
+                ...current,
+                highScore: Math.max(current.highScore, data.score),
+                lowestSwitchCost: Math.min(current.lowestSwitchCost === Infinity ? data.switchCost : current.lowestSwitchCost, data.switchCost),
+                bestAccuracy: Math.max(current.bestAccuracy, data.accuracy),
+                bestRepeatRT: Math.min(current.bestRepeatRT === Infinity ? data.repeatRT : current.bestRepeatRT, data.repeatRT),
+                bestSwitchRT: Math.min(current.bestSwitchRT === Infinity ? data.switchRT : current.bestSwitchRT, data.switchRT),
+                levelReached: Math.max(current.levelReached, data.level),
+                sessionsPlayed: current.sessionsPlayed + 1,
+                lastPlayed: Date.now()
+            };
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+            return updated;
+        }
+
+        function displayPersonalBest(currentScore, savedProgress) {
+            const pbElement = document.getElementById('personal-best');
+            if (currentScore > savedProgress.highScore) {
+                pbElement.innerHTML = '🏆 New Personal Best!';
+                pbElement.style.color = 'var(--success)';
+            } else {
+                pbElement.innerHTML = `Personal Best: ${savedProgress.highScore}`;
+                pbElement.style.color = 'var(--text-secondary)';
+            }
+        }
+
+        function clearAllTimeouts() {
+            timeoutIds.forEach(id => clearTimeout(id));
+            timeoutIds = [];
+        }
+
+        // Game functions
+        function updateStats() {
+            document.getElementById('score').textContent = score;
+            document.getElementById('level').textContent = level;
+            document.getElementById('streak').textContent = streak;
+            document.getElementById('trial-display').textContent = `${currentTrial}/${MAX_TRIALS}`;
+
+            bestStreak = Math.max(bestStreak, streak);
+        }
+
+        function getTimeLimit() {
+            // Start at 4000ms, decrease by 300ms per level, minimum 2000ms
+            return Math.max(2000, 4000 - (level - 1) * 300);
+        }
+
+        function startTimer() {
+            const timeLimit = getTimeLimit();
+            timeRemaining = timeLimit;
+            trialStartTime = Date.now();
+
+            const timerCircle = document.getElementById('timer-circle');
+            const timerText = document.getElementById('timer-text');
+
+            timerInterval = setInterval(() => {
+                timeRemaining = timeLimit - (Date.now() - trialStartTime);
+
+                if (timeRemaining <= 0) {
+                    clearInterval(timerInterval);
+                    handleTimeout();
+                    return;
+                }
+
+                const seconds = (timeRemaining / 1000).toFixed(1);
+                timerText.textContent = seconds;
+
+                // Update circular progress
+                const percentage = (timeRemaining / timeLimit) * 360;
+                timerCircle.style.background = `conic-gradient(var(--accent-purple) ${percentage}deg, var(--card-border) ${percentage}deg)`;
+            }, 50);
+        }
+
+        function stopTimer() {
+            if (timerInterval) {
+                clearInterval(timerInterval);
+                timerInterval = null;
+            }
+        }
+
+        function generateStimulus() {
+            // Pick a number (1-9, excluding 5)
+            const numbers = [1, 2, 3, 4, 6, 7, 8, 9];
+            currentNumber = numbers[Math.floor(Math.random() * numbers.length)];
+
+            // 50% chance to switch tasks
+            if (currentTrial === 1) {
+                // First trial is always parity
+                currentTask = 'PARITY';
+                isSwitchTrial = false;
+            } else {
+                const shouldSwitch = Math.random() < 0.5;
+                if (shouldSwitch) {
+                    currentTask = previousTask === 'PARITY' ? 'MAGNITUDE' : 'PARITY';
+                    isSwitchTrial = true;
+                } else {
+                    currentTask = previousTask;
+                    isSwitchTrial = false;
+                }
+            }
+
+            // Update UI
+            document.getElementById('stimulus-number').textContent = currentNumber;
+
+            const taskCue = document.getElementById('task-cue');
+            const btnLeft = document.getElementById('btn-left');
+            const btnRight = document.getElementById('btn-right');
+            const instruction = document.getElementById('instruction');
+            const badge = document.getElementById('trial-badge');
+
+            if (currentTask === 'PARITY') {
+                taskCue.textContent = 'EVEN or ODD?';
+                btnLeft.textContent = 'EVEN';
+                btnRight.textContent = 'ODD';
+                btnLeft.setAttribute('data-answer', 'even');
+                btnRight.setAttribute('data-answer', 'odd');
+                instruction.textContent = 'Press 1 or 2 (E = Even, O = Odd)';
+            } else {
+                taskCue.textContent = 'GREATER or LESS than 5?';
+                btnLeft.textContent = 'GREATER';
+                btnRight.textContent = 'LESS';
+                btnLeft.setAttribute('data-answer', 'greater');
+                btnRight.setAttribute('data-answer', 'less');
+                instruction.textContent = 'Press 1 or 2 (G = Greater, L = Less)';
+            }
+
+            // Update badge
+            if (isSwitchTrial) {
+                badge.className = 'trial-badge switch';
+                badge.textContent = 'SWITCH';
+            } else {
+                badge.className = 'trial-badge repeat';
+                badge.textContent = 'REPEAT';
+            }
+        }
+
+        function getCorrectAnswer() {
+            if (currentTask === 'PARITY') {
+                return currentNumber % 2 === 0 ? 'even' : 'odd';
+            } else {
+                return currentNumber > 5 ? 'greater' : 'less';
+            }
+        }
+
+        function startTrial() {
+            if (currentTrial >= MAX_TRIALS) {
+                endGame();
+                return;
+            }
+
+            isProcessing = false;
+            currentTrial++;
+            updateStats();
+
+            // Generate and show stimulus
+            generateStimulus();
+            startTimer();
+        }
+
+        function handleAnswer(selectedAnswer) {
+            if (isProcessing) return;
+            isProcessing = true;
+
+            stopTimer();
+
+            const responseTime = Date.now() - trialStartTime;
+            const correctAnswer = getCorrectAnswer();
+            const isCorrect = selectedAnswer === correctAnswer;
+
+            // Record RT based on trial type
+            if (isSwitchTrial) {
+                switchRTs.push(responseTime);
+            } else {
+                repeatRTs.push(responseTime);
+            }
+
+            const feedbackEl = document.getElementById('feedback');
+
+            if (isCorrect) {
+                correctCount++;
+                correctSinceLastLevel++;
+                streak++;
+
+                // Base score (switch trials worth more)
+                const baseScore = isSwitchTrial ? 15 : 10;
+                const timeBonus = Math.floor((timeRemaining / 1000) * 3);
+                score += baseScore + timeBonus;
+
+                feedbackEl.textContent = '✓';
+                feedbackEl.className = 'feedback correct show';
+
+                // Level up every 8 correct answers
+                if (correctSinceLastLevel >= CORRECT_FOR_LEVEL_UP) {
+                    level++;
+                    correctSinceLastLevel = 0;
+                }
+            } else {
+                streak = 0;
+                feedbackEl.textContent = '✗';
+                feedbackEl.className = 'feedback incorrect show';
+            }
+
+            // Update previous task for next trial
+            previousTask = currentTask;
+
+            updateStats();
+
+            // Show feedback briefly, then next trial
+            timeoutIds.push(setTimeout(() => {
+                feedbackEl.classList.remove('show');
+                timeoutIds.push(setTimeout(() => {
+                    startTrial();
+                }, 100));
+            }, 1000));
+        }
+
+        function handleTimeout() {
+            if (isProcessing) return;
+            isProcessing = true;
+
+            streak = 0;
+
+            const feedbackEl = document.getElementById('feedback');
+            feedbackEl.textContent = 'TIME UP!';
+            feedbackEl.className = 'feedback incorrect show';
+
+            // Record max time for this trial type
+            if (isSwitchTrial) {
+                switchRTs.push(getTimeLimit());
+            } else {
+                repeatRTs.push(getTimeLimit());
+            }
+
+            previousTask = currentTask;
+            updateStats();
+
+            timeoutIds.push(setTimeout(() => {
+                feedbackEl.classList.remove('show');
+                timeoutIds.push(setTimeout(() => {
+                    startTrial();
+                }, 100));
+            }, 1000));
+        }
+
+        function endGame() {
+            isGameActive = false;
+            stopTimer();
+            clearAllTimeouts();
+
+            const accuracy = Math.round((correctCount / MAX_TRIALS) * 100);
+            const avgRepeatRT = repeatRTs.length > 0 ? Math.round(repeatRTs.reduce((a, b) => a + b, 0) / repeatRTs.length) : 0;
+            const avgSwitchRT = switchRTs.length > 0 ? Math.round(switchRTs.reduce((a, b) => a + b, 0) / switchRTs.length) : 0;
+            const switchCost = avgSwitchRT - avgRepeatRT;
+
+            // Save progress
+            const savedProgress = saveProgress({
+                score: score,
+                accuracy: accuracy,
+                repeatRT: avgRepeatRT,
+                switchRT: avgSwitchRT,
+                switchCost: switchCost,
+                level: level
+            });
+
+            // Display results
+            document.getElementById('game-screen').style.display = 'none';
+            document.getElementById('results-screen').style.display = 'block';
+
+            document.getElementById('final-score').textContent = score;
+            document.getElementById('final-accuracy').textContent = accuracy + '%';
+            document.getElementById('final-repeat-rt').textContent = avgRepeatRT + 'ms';
+            document.getElementById('final-switch-rt').textContent = avgSwitchRT + 'ms';
+            document.getElementById('final-switch-cost').textContent = switchCost + 'ms';
+            document.getElementById('final-streak').textContent = bestStreak;
+
+            displayPersonalBest(score, savedProgress);
+        }
+
+        function initGame() {
+            isGameActive = true;
+            currentTrial = 0;
+            level = 1;
+            score = 0;
+            streak = 0;
+            bestStreak = 0;
+            correctCount = 0;
+            correctSinceLastLevel = 0;
+            previousTask = null;
+            repeatRTs = [];
+            switchRTs = [];
+            clearAllTimeouts();
+
+            updateStats();
+
+            // Start first trial
+            timeoutIds.push(setTimeout(() => {
+                startTrial();
+            }, 500));
+        }
+
+        // Event listeners
+        document.getElementById('btn-left').addEventListener('click', () => {
+            const answer = document.getElementById('btn-left').getAttribute('data-answer');
+            handleAnswer(answer);
+        });
+
+        document.getElementById('btn-right').addEventListener('click', () => {
+            const answer = document.getElementById('btn-right').getAttribute('data-answer');
+            handleAnswer(answer);
+        });
+
+        // Keyboard support
+        document.addEventListener('keydown', (e) => {
+            if (!isGameActive || isProcessing) return;
+
+            const key = e.key.toLowerCase();
+
+            // Universal 1-2
+            if (key === '1') {
+                handleAnswer(document.getElementById('btn-left').getAttribute('data-answer'));
+            } else if (key === '2') {
+                handleAnswer(document.getElementById('btn-right').getAttribute('data-answer'));
+            }
+            // Parity shortcuts
+            else if (key === 'e' && currentTask === 'PARITY') {
+                handleAnswer('even');
+            } else if (key === 'o' && currentTask === 'PARITY') {
+                handleAnswer('odd');
+            }
+            // Magnitude shortcuts
+            else if (key === 'g' && currentTask === 'MAGNITUDE') {
+                handleAnswer('greater');
+            } else if (key === 'l' && currentTask === 'MAGNITUDE') {
+                handleAnswer('less');
+            }
+        });
+
+        // Initialize game on page load
+        document.addEventListener('DOMContentLoaded', () => {
+            initGame();
+        });
+
+        // Cleanup on page unload
+        window.addEventListener('beforeunload', () => {
+            clearAllTimeouts();
+        });
+    </script>
+</body>
+</html>
