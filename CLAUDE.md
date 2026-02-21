@@ -169,21 +169,31 @@ Before committing changes:
 - [ ] Test keyboard navigation and accessibility
 - [ ] Validate HTML/CSS (no syntax errors)
 
-### Git Workflow
+### Git Workflow (Pull Request Review Process)
 
-1. **Check Status**:
+**IMPORTANT**: All commits must go through the Pull Request (PR) review process with ChatGPT Codex before merging to main.
+
+#### Step-by-Step PR Workflow
+
+1. **Check Status & Review Changes**:
    ```bash
    git status
    git diff
    ```
 
-2. **Stage Changes**:
+2. **Create Feature Branch**:
    ```bash
-   git add <filename>
-   # Avoid git add . or git add -A to prevent accidental commits
+   git checkout -b feature/descriptive-name
+   # Examples: feature/add-math-game, feature/fix-typing-bug, feature/update-styles
    ```
 
-3. **Commit with Attribution**:
+3. **Stage Changes**:
+   ```bash
+   git add <filename>
+   # Add specific files only - avoid git add . or git add -A to prevent accidental commits
+   ```
+
+4. **Commit with Attribution**:
    ```bash
    git commit -m "$(cat <<'EOF'
    Brief summary of changes
@@ -197,15 +207,84 @@ Before committing changes:
    )"
    ```
 
-4. **Push to GitHub Pages**:
+5. **Push Feature Branch**:
    ```bash
-   git push
+   git push -u origin feature/descriptive-name
    ```
 
-5. **Verify Deployment**:
-   - Changes go live automatically at https://focus.satm.io
-   - Wait 1-2 minutes for GitHub Pages to rebuild
-   - Hard refresh browser (Cmd+Shift+R or Ctrl+Shift+R)
+6. **Create Pull Request**:
+   ```bash
+   gh pr create --title "Descriptive PR Title" --body "$(cat <<'EOF'
+   ## Summary
+   Brief description of what this PR does
+
+   ## Changes
+   - Change 1
+   - Change 2
+   - Change 3
+
+   ## Testing
+   - [ ] Tested locally
+   - [ ] Verified in multiple browsers
+   - [ ] Checked mobile responsiveness
+   - [ ] No console errors
+
+   🤖 Ready for ChatGPT Codex review
+   EOF
+   )"
+   ```
+
+7. **Wait for ChatGPT Codex Review**:
+   - **Codex will automatically review the PR**
+   - **Good Review**: Codex responds with an emoji (✅, 👍, 🎉, etc.) → PR is approved
+   - **Issues Found**: Codex will leave comments explaining what needs to be fixed
+
+8. **If Changes Requested**:
+   - Read Codex's comments carefully
+   - Make the requested changes locally
+   - Commit and push to the same branch:
+     ```bash
+     git add <files>
+     git commit -m "Address review feedback: <description>"
+     git push
+     ```
+   - PR updates automatically
+   - Wait for Codex to review again
+   - Repeat until Codex approves (emoji response)
+
+9. **Merge PR (Only After Approval)**:
+   ```bash
+   # Once Codex gives emoji approval, you have permission to merge:
+   gh pr merge --squash --delete-branch
+   ```
+
+10. **Verify Deployment**:
+    - Changes go live automatically at https://focus.satm.io
+    - Wait 1-2 minutes for GitHub Pages to rebuild
+    - Hard refresh browser (Cmd+Shift+R or Ctrl+Shift+R)
+
+#### PR Review Guidelines
+
+**What ChatGPT Codex Reviews**:
+- Code quality and best practices
+- Potential bugs or security issues
+- Performance considerations
+- Accessibility compliance
+- Consistency with project patterns
+- Documentation completeness
+
+**Response Patterns**:
+- ✅ 👍 🎉 ✨ = **Approved** → Safe to merge
+- 💬 Comments with suggestions = **Changes requested** → Update PR
+- 🚨 ⚠️ Critical issues flagged = **Do not merge** → Fix immediately
+
+**Important Rules**:
+- ❌ **NEVER** merge without Codex approval (emoji response)
+- ❌ **NEVER** force push to feature branches under review
+- ❌ **NEVER** merge main into feature branches (rebase instead if needed)
+- ✅ **ALWAYS** address all comments before requesting re-review
+- ✅ **ALWAYS** test changes locally before pushing
+- ✅ **ALWAYS** delete feature branch after successful merge
 
 ## Typing Game Implementation Details
 
