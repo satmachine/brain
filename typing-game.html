@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Typing Speed Test - Focus Games</title>
+    <style>
+        :root {
+            --bg-dark: #0d0d1a;
+            --bg-light: #1a1a2e;
+            --text-primary: #e2e8f0;
+            --text-secondary: #94a3b8;
+            --accent-purple: #a78bfa;
+            --accent-pink: #e94560;
+            --success: #4ade80;
+            --error: #f87171;
+            --cursor: #a78bfa;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background: linear-gradient(135deg, var(--bg-dark) 0%, var(--bg-light) 100%);
+            color: var(--text-primary);
+            min-height: 100vh;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .back-link {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            color: var(--text-primary);
+            text-decoration: none;
+            font-size: 0.9rem;
+            opacity: 0.7;
+            transition: opacity 0.2s;
+        }
+        .back-link:hover {
+            opacity: 1;
+        }
+        .back-link::before {
+            content: '← ';
+        }
+
+        .container {
+            max-width: 800px;
+            width: 100%;
+            margin-top: 60px;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            font-weight: 800;
+            margin-bottom: 16px;
+            text-align: center;
+            background: linear-gradient(135deg, var(--accent-purple), var(--accent-pink));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: var(--text-secondary);
+            margin-bottom: 40px;
+            font-size: 1.1rem;
+        }
+
+        .game-area {
+            background: rgba(255, 255, 255, 0.05);
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 40px;
+            margin-bottom: 30px;
+        }
+
+        #paragraph-display {
+            font-size: 1.5rem;
+            line-height: 2;
+            margin-bottom: 30px;
+            font-family: 'Courier New', monospace;
+            word-wrap: break-word;
+            letter-spacing: 1px;
+        }
+
+        .char {
+            position: relative;
+        }
+
+        .char.correct {
+            color: var(--success);
+        }
+
+        .char.incorrect {
+            color: var(--error);
+            background-color: rgba(248, 113, 113, 0.2);
+        }
+
+        .char.cursor {
+            background-color: var(--cursor);
+            animation: blink 1s infinite;
+        }
+
+        @keyframes blink {
+            0%, 50% { opacity: 1; }
+            51%, 100% { opacity: 0.3; }
+        }
+
+        #typing-input {
+            width: 100%;
+            font-size: 1.2rem;
+            padding: 15px;
+            background: rgba(0, 0, 0, 0.3);
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            border-radius: 12px;
+            color: var(--text-primary);
+            font-family: 'Courier New', monospace;
+            transition: border-color 0.3s;
+        }
+
+        #typing-input:focus {
+            outline: none;
+            border-color: var(--accent-purple);
+        }
+
+        #typing-input:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .stat-card {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 20px;
+            border-radius: 12px;
+            text-align: center;
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--accent-purple);
+        }
+
+        .stat-value.good {
+            color: var(--success);
+        }
+
+        .results-screen {
+            display: none;
+            text-align: center;
+        }
+
+        .results-screen.active {
+            display: block;
+        }
+
+        .results-title {
+            font-size: 2rem;
+            margin-bottom: 20px;
+            color: var(--accent-pink);
+        }
+
+        .final-stats {
+            background: rgba(255, 255, 255, 0.05);
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 40px;
+            margin: 30px 0;
+        }
+
+        .final-stat {
+            margin: 20px 0;
+        }
+
+        .final-stat-label {
+            font-size: 1.1rem;
+            color: var(--text-secondary);
+            margin-bottom: 10px;
+        }
+
+        .final-stat-value {
+            font-size: 3.5rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--accent-purple), var(--accent-pink));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .btn {
+            background: var(--accent-pink);
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            border-radius: 50px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin: 10px;
+        }
+
+        .btn:hover {
+            background: #f55c78;
+            transform: scale(1.05);
+        }
+
+        .btn:active {
+            transform: scale(0.98);
+        }
+
+        .btn-secondary {
+            background: transparent;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            color: var(--text-primary);
+        }
+
+        .btn-secondary:hover {
+            border-color: var(--accent-purple);
+            background: rgba(167, 139, 250, 0.1);
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                margin-top: 40px;
+            }
+
+            h1 {
+                font-size: 2rem;
+            }
+
+            .game-area {
+                padding: 20px;
+            }
+
+            #paragraph-display {
+                font-size: 1.2rem;
+            }
+
+            .final-stat-value {
+                font-size: 2.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <a href="index.html" class="back-link">Back to Menu</a>
+
+    <div class="container">
+        <h1>Typing Speed Test</h1>
+        <p class="subtitle">Type the paragraph as accurately and quickly as you can</p>
+
+        <div id="game-screen">
+            <div class="game-area">
+                <div id="paragraph-display"></div>
+                <input
+                    type="text"
+                    id="typing-input"
+                    placeholder="Click here and start typing..."
+                    autocomplete="off"
+                    autocorrect="off"
+                    autocapitalize="off"
+                    spellcheck="false"
+                >
+            </div>
+
+            <div class="stats">
+                <div class="stat-card">
+                    <div class="stat-label">Time</div>
+                    <div class="stat-value" id="time-display">0s</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">WPM</div>
+                    <div class="stat-value" id="wpm-display">0</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Accuracy</div>
+                    <div class="stat-value" id="accuracy-display">100%</div>
+                </div>
+            </div>
+        </div>
+
+        <div id="results-screen" class="results-screen">
+            <h2 class="results-title">Test Complete!</h2>
+            <div class="final-stats">
+                <div class="final-stat">
+                    <div class="final-stat-label">Words Per Minute</div>
+                    <div class="final-stat-value" id="final-wpm">0</div>
+                </div>
+                <div class="final-stat" style="margin-top: 40px;">
+                    <div class="final-stat-label">Accuracy</div>
+                    <div class="final-stat-value" id="final-accuracy">100%</div>
+                </div>
+                <div id="source-attribution" style="margin-top: 30px; font-style: italic; color: var(--text-secondary); font-size: 1rem;">
+                    <!-- Source attribution will be populated here -->
+                </div>
+            </div>
+            <button class="btn" onclick="restartGame()">Try Again</button>
+            <button class="btn btn-secondary" onclick="window.location.href='index.html'">Back to Menu</button>
+        </div>
+    </div>
+
+    <script>
+        // Fallback paragraphs in case JSON loading fails
+        const FALLBACK_PARAGRAPHS = [
+            "The quick brown fox jumps over the lazy dog while the sun sets behind the mountains. Every moment in life is precious and should be cherished with gratitude and mindfulness.",
+            "Technology has revolutionized the way we communicate and connect with people across the globe. From instant messaging to video calls, the world has become a smaller and more interconnected place.",
+            "Learning new skills requires dedication, patience, and consistent practice over time. Whether it's mastering a musical instrument or learning a new language, persistence is the key to success.",
+            "Nature offers a beautiful reminder of the cycles of life through changing seasons. Spring brings renewal, summer offers growth, autumn teaches letting go, and winter provides rest and reflection.",
+            "Reading books opens doors to countless worlds and perspectives we might never otherwise encounter. Each page turned is a step into someone else's imagination, knowledge, or lived experience."
+        ];
+
+        let PARAGRAPHS_DATA = []; // Will hold full paragraph objects from JSON
+        let currentParagraph = '';
+        let currentParagraphData = null; // Store the full data object for attribution
+        let startTime = null;
+        let timerInterval = null;
+        let isGameActive = false;
+
+        // Load paragraphs from JSON file
+        async function loadParagraphs() {
+            try {
+                const response = await fetch('paragraphs.json');
+                if (!response.ok) throw new Error('Failed to load paragraphs');
+                const data = await response.json();
+
+                if (data.paragraphs && data.paragraphs.length > 0) {
+                    PARAGRAPHS_DATA = data.paragraphs;
+                    console.log(`Loaded ${PARAGRAPHS_DATA.length} paragraphs from classic literature`);
+                    return true;
+                } else {
+                    throw new Error('No paragraphs found in JSON');
+                }
+            } catch (error) {
+                console.warn('Could not load paragraphs.json, using fallback paragraphs:', error);
+                // Convert fallback paragraphs to the expected format
+                PARAGRAPHS_DATA = FALLBACK_PARAGRAPHS.map(text => ({
+                    text: text,
+                    source: 'Built-in',
+                    author: 'Focus Games',
+                    category: 'general'
+                }));
+                return false;
+            }
+        }
+
+        const paragraphDisplay = document.getElementById('paragraph-display');
+        const typingInput = document.getElementById('typing-input');
+        const timeDisplay = document.getElementById('time-display');
+        const wpmDisplay = document.getElementById('wpm-display');
+        const accuracyDisplay = document.getElementById('accuracy-display');
+        const gameScreen = document.getElementById('game-screen');
+        const resultsScreen = document.getElementById('results-screen');
+
+        function initGame() {
+            // Select random paragraph from loaded data
+            const randomIndex = Math.floor(Math.random() * PARAGRAPHS_DATA.length);
+            currentParagraphData = PARAGRAPHS_DATA[randomIndex];
+            currentParagraph = currentParagraphData.text;
+            renderParagraph('');
+
+            // Reset input
+            typingInput.value = '';
+            typingInput.disabled = false;
+            typingInput.focus();
+
+            // Reset stats
+            startTime = null;
+            isGameActive = true;
+            updateStats('', 0);
+
+            // Show game screen
+            gameScreen.classList.remove('hidden');
+            resultsScreen.classList.remove('active');
+        }
+
+        function renderParagraph(typedText) {
+            let html = '';
+            const chars = currentParagraph.split('');
+
+            chars.forEach((char, index) => {
+                let className = 'char';
+
+                if (index < typedText.length) {
+                    // Character has been typed
+                    if (typedText[index] === char) {
+                        className += ' correct';
+                    } else {
+                        className += ' incorrect';
+                    }
+                } else if (index === typedText.length) {
+                    // Current cursor position
+                    className += ' cursor';
+                }
+
+                // Escape HTML characters
+                const displayChar = char === ' ' ? '&nbsp;' : char;
+                html += `<span class="${className}">${displayChar}</span>`;
+            });
+
+            paragraphDisplay.innerHTML = html;
+        }
+
+        function updateStats(typedText, elapsed) {
+            // Update time
+            const seconds = Math.floor(elapsed / 1000);
+            timeDisplay.textContent = seconds + 's';
+
+            // Calculate WPM
+            let wpm = 0;
+            if (elapsed > 0) {
+                const words = currentParagraph.trim().split(/\s+/).length;
+                const minutes = elapsed / 60000;
+                wpm = Math.round((typedText.split(/\s+/).filter(w => w.length > 0).length) / minutes);
+            }
+            wpmDisplay.textContent = wpm;
+
+            // Calculate accuracy
+            let accuracy = 100;
+            if (typedText.length > 0) {
+                const correctChars = typedText.split('').filter((char, i) =>
+                    char === currentParagraph[i]
+                ).length;
+                accuracy = Math.round((correctChars / typedText.length) * 100);
+            }
+            accuracyDisplay.textContent = accuracy + '%';
+
+            // Color code accuracy
+            if (accuracy >= 95) {
+                accuracyDisplay.classList.add('good');
+            } else {
+                accuracyDisplay.classList.remove('good');
+            }
+        }
+
+        function startTimer() {
+            if (startTime === null) {
+                startTime = Date.now();
+                timerInterval = setInterval(() => {
+                    if (isGameActive) {
+                        const elapsed = Date.now() - startTime;
+                        updateStats(typingInput.value, elapsed);
+                    }
+                }, 100);
+            }
+        }
+
+        function endGame() {
+            isGameActive = false;
+            clearInterval(timerInterval);
+            typingInput.disabled = true;
+
+            const elapsed = Date.now() - startTime;
+            const typedText = typingInput.value;
+
+            // Calculate final stats
+            const words = currentParagraph.trim().split(/\s+/).length;
+            const minutes = elapsed / 60000;
+            const wpm = Math.round(words / minutes);
+
+            const correctChars = typedText.split('').filter((char, i) =>
+                char === currentParagraph[i]
+            ).length;
+            const accuracy = Math.round((correctChars / typedText.length) * 100);
+
+            // Display results
+            document.getElementById('final-wpm').textContent = wpm;
+            document.getElementById('final-accuracy').textContent = accuracy + '%';
+
+            // Display source attribution
+            const attributionElement = document.getElementById('source-attribution');
+            if (currentParagraphData && currentParagraphData.source && currentParagraphData.author) {
+                attributionElement.innerHTML = `— ${currentParagraphData.author}, <em>"${currentParagraphData.source}"</em>`;
+            } else {
+                attributionElement.innerHTML = '';
+            }
+
+            gameScreen.classList.add('hidden');
+            resultsScreen.classList.add('active');
+        }
+
+        function restartGame() {
+            clearInterval(timerInterval);
+            initGame();
+        }
+
+        // Event listeners
+        typingInput.addEventListener('input', (e) => {
+            if (!isGameActive) return;
+
+            const typedText = e.target.value;
+
+            // Start timer on first keystroke
+            startTimer();
+
+            // Update display
+            renderParagraph(typedText);
+
+            // Check if complete
+            if (typedText.length >= currentParagraph.length) {
+                endGame();
+            }
+        });
+
+        // Prevent paste
+        typingInput.addEventListener('paste', (e) => {
+            e.preventDefault();
+        });
+
+        // Initialize game on load after loading paragraphs
+        (async () => {
+            await loadParagraphs();
+            initGame();
+        })();
+    </script>
+</body>
+</html>
