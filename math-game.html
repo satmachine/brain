@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Math Challenge - Focus Games</title>
+    <style>
+        :root {
+            --bg-dark: #0d0d1a;
+            --bg-light: #1a1a2e;
+            --text-primary: #e2e8f0;
+            --text-secondary: #94a3b8;
+            --accent-purple: #a78bfa;
+            --accent-pink: #e94560;
+            --success: #4ade80;
+            --error: #f87171;
+            --success-bg: #052e16;
+            --error-bg: #2a0a0a;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background: linear-gradient(135deg, var(--bg-dark) 0%, var(--bg-light) 100%);
+            color: var(--text-primary);
+            min-height: 100vh;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .back-link {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            color: var(--text-primary);
+            text-decoration: none;
+            font-size: 0.9rem;
+            opacity: 0.7;
+            transition: opacity 0.2s;
+        }
+        .back-link:hover {
+            opacity: 1;
+        }
+        .back-link::before {
+            content: '← ';
+        }
+
+        .container {
+            max-width: 600px;
+            width: 100%;
+            margin-top: 60px;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            font-weight: 800;
+            margin-bottom: 16px;
+            text-align: center;
+            background: linear-gradient(135deg, var(--accent-purple), var(--accent-pink));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: var(--text-secondary);
+            margin-bottom: 40px;
+            font-size: 1.1rem;
+        }
+
+        .stats-bar {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 30px;
+            padding: 15px 20px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 12px;
+        }
+
+        .stat-item {
+            text-align: center;
+        }
+
+        .stat-label {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            margin-bottom: 5px;
+        }
+
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--accent-purple);
+        }
+
+        .question-box {
+            background: rgba(255, 255, 255, 0.05);
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 60px 40px;
+            margin-bottom: 30px;
+            text-align: center;
+            transition: background-color 0.3s;
+        }
+
+        .question-text {
+            font-size: 3rem;
+            font-weight: 700;
+            margin-bottom: 40px;
+            font-family: 'Courier New', monospace;
+        }
+
+        .answer-input {
+            width: 100%;
+            max-width: 300px;
+            font-size: 2rem;
+            padding: 20px;
+            background: rgba(0, 0, 0, 0.3);
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            border-radius: 12px;
+            color: var(--text-primary);
+            text-align: center;
+            font-family: 'Courier New', monospace;
+            transition: border-color 0.3s;
+        }
+
+        .answer-input:focus {
+            outline: none;
+            border-color: var(--accent-purple);
+        }
+
+        .feedback {
+            margin-top: 20px;
+            font-size: 1.2rem;
+            font-weight: 600;
+            min-height: 30px;
+        }
+
+        .feedback.correct {
+            color: var(--success);
+        }
+
+        .feedback.incorrect {
+            color: var(--error);
+        }
+
+        .level-badge {
+            display: inline-block;
+            padding: 8px 16px;
+            background: linear-gradient(135deg, var(--accent-purple), var(--accent-pink));
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            margin-bottom: 20px;
+        }
+
+        .streak-indicator {
+            display: flex;
+            gap: 8px;
+            justify-content: center;
+            margin-top: 20px;
+        }
+
+        .streak-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.2);
+            transition: background-color 0.3s;
+        }
+
+        .streak-dot.active {
+            background: var(--success);
+            box-shadow: 0 0 10px var(--success);
+        }
+
+        .btn {
+            background: var(--accent-pink);
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            border-radius: 50px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin: 10px;
+        }
+
+        .btn:hover {
+            background: #f55c78;
+            transform: scale(1.05);
+        }
+
+        .btn:active {
+            transform: scale(0.98);
+        }
+
+        .btn-secondary {
+            background: transparent;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            color: var(--text-primary);
+        }
+
+        .btn-secondary:hover {
+            border-color: var(--accent-purple);
+            background: rgba(167, 139, 250, 0.1);
+        }
+
+        .hint {
+            text-align: center;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            margin-top: 20px;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                margin-top: 40px;
+            }
+
+            h1 {
+                font-size: 2rem;
+            }
+
+            .question-box {
+                padding: 40px 20px;
+            }
+
+            .question-text {
+                font-size: 2rem;
+            }
+
+            .answer-input {
+                font-size: 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <a href="index.html" class="back-link">Back to Menu</a>
+
+    <div class="container">
+        <h1>Math Challenge</h1>
+        <p class="subtitle">Solve as many problems as you can. Level up every 5 correct answers!</p>
+
+        <div class="stats-bar">
+            <div class="stat-item">
+                <div class="stat-label">Score</div>
+                <div class="stat-value" id="score-display">0</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-label">Level</div>
+                <div class="stat-value" id="level-display">1</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-label">Streak</div>
+                <div class="stat-value" id="streak-display">0</div>
+            </div>
+        </div>
+
+        <div class="question-box" id="question-box">
+            <div class="question-text" id="question-text">? + ? = ?</div>
+            <input
+                type="number"
+                id="answer-input"
+                class="answer-input"
+                placeholder="?"
+                autocomplete="off"
+            >
+            <div class="feedback" id="feedback"></div>
+            <div class="streak-indicator" id="streak-indicator">
+                <div class="streak-dot"></div>
+                <div class="streak-dot"></div>
+                <div class="streak-dot"></div>
+                <div class="streak-dot"></div>
+                <div class="streak-dot"></div>
+            </div>
+        </div>
+
+        <div class="hint">Press Enter to submit your answer</div>
+    </div>
+
+    <script>
+        let score = 0;
+        let level = 1;
+        let streak = 0;
+        let totalCorrect = 0; // Track total correct answers for level progression
+        let currentQuestion = null;
+        let isProcessing = false; // Prevent repeated submissions
+
+        const questionBox = document.getElementById('question-box');
+        const questionText = document.getElementById('question-text');
+        const answerInput = document.getElementById('answer-input');
+        const feedback = document.getElementById('feedback');
+        const scoreDisplay = document.getElementById('score-display');
+        const levelDisplay = document.getElementById('level-display');
+        const streakDisplay = document.getElementById('streak-display');
+        const streakIndicator = document.getElementById('streak-indicator');
+
+        function rand(min, max) {
+            return Math.floor(Math.random() * (max - min + 1)) + min;
+        }
+
+        function generateQuestion(level) {
+            const operations = ['+', '−', '×', '÷'];
+            const op = operations[rand(0, 3)];
+
+            let a, b, answer;
+            const maxNum = level < 3 ? 12 : level < 6 ? 25 : 50;
+
+            switch (op) {
+                case '+':
+                    a = rand(1, maxNum);
+                    b = rand(1, maxNum);
+                    answer = a + b;
+                    break;
+
+                case '−':
+                    // Ensure positive result
+                    a = rand(1, maxNum);
+                    b = rand(1, a);
+                    answer = a - b;
+                    break;
+
+                case '×':
+                    const maxMult = level < 3 ? 12 : level < 6 ? 15 : 20;
+                    a = rand(2, maxMult);
+                    b = rand(2, maxMult);
+                    answer = a * b;
+                    break;
+
+                case '÷':
+                    // Ensure integer division
+                    b = rand(2, 12);
+                    answer = rand(1, 12);
+                    a = b * answer;
+                    break;
+            }
+
+            return { a, b, op, answer };
+        }
+
+        function displayQuestion() {
+            currentQuestion = generateQuestion(level);
+            questionText.textContent = `${currentQuestion.a} ${currentQuestion.op} ${currentQuestion.b} = ?`;
+            answerInput.value = '';
+            answerInput.focus();
+            feedback.textContent = '';
+            feedback.className = 'feedback';
+        }
+
+        function updateStreakIndicator() {
+            const dots = streakIndicator.querySelectorAll('.streak-dot');
+            dots.forEach((dot, index) => {
+                if (index < (streak % 5)) {
+                    dot.classList.add('active');
+                } else {
+                    dot.classList.remove('active');
+                }
+            });
+        }
+
+        function flashBackground(isCorrect) {
+            questionBox.style.backgroundColor = isCorrect ? 'var(--success-bg)' : 'var(--error-bg)';
+            setTimeout(() => {
+                questionBox.style.backgroundColor = '';
+            }, 600);
+        }
+
+        function checkAnswer() {
+            // Prevent repeated scoring for the same question
+            if (isProcessing) {
+                return;
+            }
+
+            const userAnswer = parseInt(answerInput.value);
+
+            if (isNaN(userAnswer)) {
+                return;
+            }
+
+            isProcessing = true;
+
+            const isCorrect = userAnswer === currentQuestion.answer;
+
+            if (isCorrect) {
+                // Correct answer
+                score += (10 * level);
+                streak++;
+                totalCorrect++;
+
+                feedback.textContent = '✓ Correct!';
+                feedback.className = 'feedback correct';
+                flashBackground(true);
+
+                // Level up every 5 correct answers (based on total, not streak)
+                if (totalCorrect > 0 && totalCorrect % 5 === 0) {
+                    level = Math.min(level + 1, 8);
+                    levelDisplay.textContent = level;
+
+                    // Show level up message
+                    setTimeout(() => {
+                        feedback.textContent = `🎉 Level ${level}!`;
+                    }, 300);
+                }
+            } else {
+                // Wrong answer
+                streak = 0;
+
+                feedback.textContent = `✗ Wrong! The answer was ${currentQuestion.answer}`;
+                feedback.className = 'feedback incorrect';
+                flashBackground(false);
+            }
+
+            // Update displays
+            scoreDisplay.textContent = score;
+            streakDisplay.textContent = streak;
+            updateStreakIndicator();
+
+            // Next question after delay
+            setTimeout(() => {
+                isProcessing = false;
+                displayQuestion();
+            }, 1500);
+        }
+
+        // Event listeners
+        answerInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                checkAnswer();
+            }
+        });
+
+        // Prevent scientific notation input
+        answerInput.addEventListener('input', (e) => {
+            // Remove any non-digit characters except minus sign at the start
+            let value = e.target.value;
+            if (value.length > 0 && value[0] === '-') {
+                value = '-' + value.slice(1).replace(/[^\d]/g, '');
+            } else {
+                value = value.replace(/[^\d]/g, '');
+            }
+            e.target.value = value;
+        });
+
+        // Initialize game
+        displayQuestion();
+        updateStreakIndicator();
+    </script>
+</body>
+</html>
