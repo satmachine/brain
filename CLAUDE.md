@@ -261,7 +261,7 @@ EOF
      ```
    - PR updates automatically
    - Both reviewers will re-review
-   - Repeat until **BOTH reviewers approve** (emoji responses)
+   - Repeat until **BOTH reviewers approve** (formal GitHub "Approved" reviews)
 
 9. **Merge PR (Only After BOTH Approvals)**:
    ```bash
@@ -296,7 +296,7 @@ EOF
 - 📝 **Note**: Comments may contain emojis (✅, 👍, 🎉), but only **formal GitHub approval reviews** count for merging
 
 **Important Rules**:
-- ❌ **NEVER** merge without approval from **BOTH** CodeRabbit AND ChatGPT Codex (emoji responses)
+- ❌ **NEVER** merge without formal "Approved" reviews from **BOTH** CodeRabbit AND ChatGPT Codex
 - ❌ **NEVER** use `git push --force` on branches under review
 - ✅ **ALLOWED**: `git push --force-with-lease` after rebasing (safer force-push)
 - ❌ **NEVER** merge main into feature branches (rebase instead if needed)
