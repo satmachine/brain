@@ -171,11 +171,14 @@ Before committing changes:
 
 ### Git Workflow (Pull Request Review Process)
 
-**IMPORTANT**: All commits must go through the Pull Request (PR) review process with **CodeRabbit** (automated code reviewer) before merging to main.
+**IMPORTANT**: All commits must go through the Pull Request (PR) review process with **BOTH automated reviewers** before merging to main. More eyes = better code quality.
 
 **Note on Tools**:
 - **Claude Code** (Claude Sonnet 4.5) - AI coding assistant that writes code (commit co-author)
-- **CodeRabbit** - Automated PR reviewer that checks code quality and best practices
+- **CodeRabbit** - First automated PR reviewer (checks code quality, best practices, security)
+- **ChatGPT Codex** - Second automated PR reviewer (additional perspective and validation)
+
+**Both reviewers must approve before merge!**
 
 #### Step-by-Step PR Workflow
 
@@ -233,18 +236,21 @@ Before committing changes:
    - [ ] Checked mobile responsiveness
    - [ ] No console errors
 
-   🤖 Ready for CodeRabbit review
+   🤖 Ready for automated review (CodeRabbit + ChatGPT Codex)
    EOF
    )"
    ```
 
-7. **Wait for CodeRabbit Review**:
-   - **CodeRabbit will automatically review the PR**
-   - **Good Review**: CodeRabbit responds with an emoji (✅, 👍, 🎉, etc.) → PR is approved
-   - **Issues Found**: CodeRabbit will leave comments explaining what needs to be fixed
+7. **Wait for Automated Reviews**:
+   - **Both CodeRabbit AND ChatGPT Codex will review the PR**
+   - **Good Review**: Reviewer responds with an emoji (✅, 👍, 🎉, etc.) → That reviewer approves
+   - **Issues Found**: Reviewer will leave comments explaining what needs to be fixed
+   - **IMPORTANT**: Read through ALL comments from both reviewers
+   - **If you have questions**: Respond to comments asking for clarification
 
-8. **If Changes Requested**:
-   - Read CodeRabbit's comments carefully
+8. **If Changes Requested (by either reviewer)**:
+   - Read all comments carefully from both CodeRabbit and ChatGPT Codex
+   - If anything is unclear, **reply to the comment asking questions**
    - Make the requested changes locally
    - Commit and push to the same branch:
      ```bash
@@ -253,14 +259,15 @@ Before committing changes:
      git push
      ```
    - PR updates automatically
-   - Wait for CodeRabbit to review again
-   - Repeat until CodeRabbit approves (emoji response)
+   - Both reviewers will re-review
+   - Repeat until **BOTH reviewers approve** (emoji responses)
 
-9. **Merge PR (Only After Approval)**:
+9. **Merge PR (Only After BOTH Approvals)**:
    ```bash
-   # Once CodeRabbit gives emoji approval, you have permission to merge:
+   # Once BOTH CodeRabbit AND ChatGPT Codex give emoji approval, you have permission to merge:
    gh pr merge --squash --delete-branch
    ```
+   - ❌ **DO NOT merge with only one approval** - need both ✅
 
 10. **Verify Deployment**:
     - Changes go live automatically at https://focus.satm.io
@@ -269,24 +276,29 @@ Before committing changes:
 
 #### PR Review Guidelines
 
-**What CodeRabbit Reviews**:
+**What CodeRabbit & ChatGPT Codex Review**:
 - Code quality and best practices
 - Potential bugs or security issues
 - Performance considerations
 - Accessibility compliance
 - Consistency with project patterns
 - Documentation completeness
+- Architecture and design decisions
+- Edge cases and error handling
 
-**Response Patterns**:
-- ✅ 👍 🎉 ✨ = **Approved** → Safe to merge
+**Response Patterns** (from both reviewers):
+- ✅ 👍 🎉 ✨ = **Approved** → One reviewer satisfied (need both!)
 - 💬 Comments with suggestions = **Changes requested** → Update PR
 - 🚨 ⚠️ Critical issues flagged = **Do not merge** → Fix immediately
+- ❓ Questions from reviewer = **Respond** → Answer or clarify in comment replies
 
 **Important Rules**:
-- ❌ **NEVER** merge without CodeRabbit approval (emoji response)
+- ❌ **NEVER** merge without approval from **BOTH** CodeRabbit AND ChatGPT Codex (emoji responses)
 - ❌ **NEVER** use `git push --force` on branches under review
 - ✅ **ALLOWED**: `git push --force-with-lease` after rebasing (safer force-push)
 - ❌ **NEVER** merge main into feature branches (rebase instead if needed)
+- ✅ **ALWAYS** read through all comments from both reviewers
+- ✅ **ALWAYS** respond to comments if you have questions or need clarification
 - ✅ **ALWAYS** address all comments before requesting re-review
 - ✅ **ALWAYS** test changes locally before pushing
 - ✅ **ALWAYS** delete feature branch after successful merge
