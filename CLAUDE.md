@@ -243,10 +243,11 @@ Before committing changes:
 
 7. **Wait for Automated Reviews**:
    - **Both CodeRabbit AND ChatGPT Codex will review the PR**
-   - **Good Review**: Reviewer responds with an emoji (✅, 👍, 🎉, etc.) → That reviewer approves
-   - **Issues Found**: Reviewer will leave comments explaining what needs to be fixed
+   - **Approved**: Reviewer submits a formal GitHub "Approved" review (green ✅ checkmark in PR's Reviewers section)
+   - **Issues Found**: Reviewer submits "Changes requested" review and leaves inline comments explaining fixes needed
    - **IMPORTANT**: Read through ALL comments from both reviewers
    - **If you have questions**: Respond to comments asking for clarification
+   - **Note**: Review comments may contain emojis, but only formal approval (green ✅ in Reviewers) counts
 
 8. **If Changes Requested (by either reviewer)**:
    - Read all comments carefully from both CodeRabbit and ChatGPT Codex
@@ -264,10 +265,11 @@ Before committing changes:
 
 9. **Merge PR (Only After BOTH Approvals)**:
    ```bash
-   # Once BOTH CodeRabbit AND ChatGPT Codex give emoji approval, you have permission to merge:
+   # Once BOTH CodeRabbit AND ChatGPT Codex submit formal "Approved" reviews (green ✅ in Reviewers section):
    gh pr merge --squash --delete-branch
    ```
    - ❌ **DO NOT merge with only one approval** - need both ✅
+   - ❌ **DO NOT merge based on emoji comments** - need formal GitHub review approvals
 
 10. **Verify Deployment**:
     - Changes go live automatically at https://focus.satm.io
@@ -287,10 +289,11 @@ Before committing changes:
 - Edge cases and error handling
 
 **Response Patterns** (from both reviewers):
-- ✅ 👍 🎉 ✨ = **Approved** → One reviewer satisfied (need both!)
-- 💬 Comments with suggestions = **Changes requested** → Update PR
-- 🚨 ⚠️ Critical issues flagged = **Do not merge** → Fix immediately
-- ❓ Questions from reviewer = **Respond** → Answer or clarify in comment replies
+- ✅ **Formal "Approved" review** (green checkmark in Reviewers section) = Reviewer satisfied (need both!)
+- 💬 **Comments with suggestions** = Changes requested → Update PR
+- 🚨 **"Changes requested" review** = Do not merge → Fix issues immediately
+- ❓ **Questions from reviewer** = Respond → Answer or clarify in comment replies
+- 📝 **Note**: Comments may contain emojis (✅, 👍, 🎉), but only **formal GitHub approval reviews** count for merging
 
 **Important Rules**:
 - ❌ **NEVER** merge without approval from **BOTH** CodeRabbit AND ChatGPT Codex (emoji responses)
