@@ -340,6 +340,17 @@
             font-size: 1.1rem;
         }
 
+        .stroop-info {
+            background: rgba(167, 139, 250, 0.1);
+            border: 1px solid rgba(167, 139, 250, 0.3);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 30px;
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+            line-height: 1.6;
+        }
+
         .buttons {
             display: flex;
             gap: 20px;
@@ -435,6 +446,10 @@
 
             <div id="personal-best" class="personal-best"></div>
 
+            <div class="stroop-info">
+                <strong>Stroop Effect:</strong> The difference in reaction time between incongruent and congruent trials. Typical range: 100-300ms. Lower values indicate better cognitive control and resistance to interference.
+            </div>
+
             <div class="results-stats">
                 <div class="result-card">
                     <div class="result-label">Final Score</div>
@@ -445,12 +460,20 @@
                     <div class="result-value" id="final-accuracy">0%</div>
                 </div>
                 <div class="result-card">
-                    <div class="result-label">Avg Response Time</div>
-                    <div class="result-value" id="final-rt">0ms</div>
-                </div>
-                <div class="result-card">
                     <div class="result-label">Best Streak</div>
                     <div class="result-value" id="final-streak">0</div>
+                </div>
+                <div class="result-card">
+                    <div class="result-label">Congruent RT</div>
+                    <div class="result-value" id="final-congruent-rt">0ms</div>
+                </div>
+                <div class="result-card">
+                    <div class="result-label">Incongruent RT</div>
+                    <div class="result-value" id="final-incongruent-rt">0ms</div>
+                </div>
+                <div class="result-card">
+                    <div class="result-label">Stroop Effect</div>
+                    <div class="result-value highlight" id="final-stroop-effect">0ms</div>
                 </div>
             </div>
 
@@ -485,7 +508,10 @@
         let correctSinceLastLevel = 0;
         let currentWord = null;
         let currentColor = null;
+        let isCongruent = false;              // Track current trial type
         let reactionTimes = [];
+        let congruentRTs = [];                // Reaction times for congruent trials
+        let incongruentRTs = [];              // Reaction times for incongruent trials
         let trialStartTime = null;
         let timerInterval = null;
         let timeRemaining = 0;
@@ -607,9 +633,17 @@
             // Pick random word
             currentWord = COLORS[Math.floor(Math.random() * COLORS.length)];
 
-            // Pick random color (different from word to create interference)
-            let availableColors = COLORS.filter(c => c !== currentWord);
-            currentColor = availableColors[Math.floor(Math.random() * availableColors.length)];
+            // 50% chance congruent, 50% incongruent
+            if (Math.random() < 0.5) {
+                // Congruent trial: word matches color
+                currentColor = currentWord;
+                isCongruent = true;
+            } else {
+                // Incongruent trial: word mismatches color
+                let availableColors = COLORS.filter(c => c !== currentWord);
+                currentColor = availableColors[Math.floor(Math.random() * availableColors.length)];
+                isCongruent = false;
+            }
 
             // Display word in color
             const wordElement = document.getElementById('stimulus-word');
@@ -641,6 +675,13 @@
 
             const responseTime = Date.now() - trialStartTime;
             reactionTimes.push(responseTime);
+
+            // Track RTs separately for congruent vs incongruent trials
+            if (isCongruent) {
+                congruentRTs.push(responseTime);
+            } else {
+                incongruentRTs.push(responseTime);
+            }
 
             const isCorrect = selectedColor === currentColor;
             const feedbackEl = document.getElementById('feedback');
@@ -686,7 +727,15 @@
             isProcessing = true;
 
             streak = 0;
-            reactionTimes.push(getTimeLimit());
+            const timeLimit = getTimeLimit();
+            reactionTimes.push(timeLimit);
+
+            // Track timeout in appropriate array
+            if (isCongruent) {
+                congruentRTs.push(timeLimit);
+            } else {
+                incongruentRTs.push(timeLimit);
+            }
 
             const feedbackEl = document.getElementById('feedback');
             feedbackEl.textContent = 'TIME UP!';
@@ -712,6 +761,15 @@
                 ? Math.round(reactionTimes.reduce((a, b) => a + b, 0) / reactionTimes.length)
                 : 0;
 
+            // Calculate Stroop effect metrics
+            const avgCongruentRT = congruentRTs.length > 0
+                ? Math.round(congruentRTs.reduce((a, b) => a + b, 0) / congruentRTs.length)
+                : 0;
+            const avgIncongruentRT = incongruentRTs.length > 0
+                ? Math.round(incongruentRTs.reduce((a, b) => a + b, 0) / incongruentRTs.length)
+                : 0;
+            const stroopEffect = avgIncongruentRT - avgCongruentRT; // Key metric!
+
             // Save progress
             const savedProgress = saveProgress({
                 score: score,
@@ -727,8 +785,10 @@
 
             document.getElementById('final-score').textContent = score;
             document.getElementById('final-accuracy').textContent = accuracy + '%';
-            document.getElementById('final-rt').textContent = avgRT + 'ms';
             document.getElementById('final-streak').textContent = bestStreak;
+            document.getElementById('final-congruent-rt').textContent = avgCongruentRT + 'ms';
+            document.getElementById('final-incongruent-rt').textContent = avgIncongruentRT + 'ms';
+            document.getElementById('final-stroop-effect').textContent = stroopEffect + 'ms';
 
             displayPersonalBest(score, savedProgress);
         }
@@ -743,6 +803,8 @@
             correctCount = 0;
             correctSinceLastLevel = 0;
             reactionTimes = [];
+            congruentRTs = [];
+            incongruentRTs = [];
             clearAllTimeouts();
 
             updateStats();
