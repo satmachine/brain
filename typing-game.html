@@ -326,6 +326,11 @@
         </div>
     </div>
 
+    <!-- Firebase Scripts (must load before game script) -->
+    <script src="firebase-config.js"></script>
+    <script src="firebase-auth.js"></script>
+    <script src="firebase-db.js"></script>
+
     <script>
         // Fallback paragraphs in case JSON loading fails
         const FALLBACK_PARAGRAPHS = [
@@ -503,6 +508,9 @@
 
             gameScreen.classList.add('hidden');
             resultsScreen.classList.add('active');
+
+            // Save session to Firestore
+            saveSession(wpm, accuracy, elapsed);
         }
 
         function restartGame() {
@@ -533,11 +541,73 @@
             e.preventDefault();
         });
 
+        // Save session to Firestore
+        async function saveSession(wpm, accuracy, timeElapsed) {
+            if (!isSignedIn()) {
+                console.log('Not signed in, skipping save');
+                return;
+            }
+
+            try {
+                const sessionData = {
+                    timestamp: new Date().toISOString(),
+                    wpm: wpm,
+                    accuracy: accuracy,
+                    timeElapsed: timeElapsed,
+                    paragraphSource: currentParagraphData ? `${currentParagraphData.author} - ${currentParagraphData.source}` : 'Unknown'
+                };
+
+                // Get existing data to calculate personal bests
+                const userData = await readUserData();
+                const typingData = userData.typing || { personalBests: {}, sessions: [] };
+
+                const personalBests = {
+                    highestWPM: Math.max(wpm, typingData.personalBests.highestWPM || 0),
+                    bestAccuracy: Math.max(accuracy, typingData.personalBests.bestAccuracy || 0),
+                    fastestTime: timeElapsed < (typingData.personalBests.fastestTime || Infinity) ? timeElapsed : typingData.personalBests.fastestTime,
+                    sessionsPlayed: (typingData.personalBests.sessionsPlayed || 0) + 1,
+                    lastPlayed: new Date().toISOString()
+                };
+
+                await updateGameData('typing', sessionData, personalBests);
+                console.log('Session saved successfully');
+
+            } catch (error) {
+                console.error('Failed to save session:', error);
+                showError('Failed to save progress. Please check your connection.');
+            }
+        }
+
         // Initialize game on load after loading paragraphs
         (async () => {
+            // Load paragraphs first (works without auth)
             await loadParagraphs();
+
+            // Check authentication
+            await initAuth();
+
+            // Check if user is signed in
+            const user = getCurrentUser();
+            if (!user) {
+                // Show sign-in prompt
+                document.getElementById('game-screen').innerHTML = `
+                    <div style="text-align: center; padding: 60px 20px;">
+                        <h2 style="color: var(--accent-pink); margin-bottom: 20px;">Sign In Required</h2>
+                        <p style="color: var(--text-secondary); margin-bottom: 30px;">Please sign in to play and save your progress.</p>
+                        <button class="btn" onclick="window.location.href='index.html'">Go to Home Page</button>
+                    </div>
+                `;
+                return;
+            }
+
+            // User is signed in, start game
             initGame();
         })();
+
+        // Show error message
+        function showError(message) {
+            alert(message); // Simple alert for now
+        }
     </script>
 </body>
 </html>

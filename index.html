@@ -158,6 +158,124 @@
             transform: scale(0.98);
         }
 
+        /* Auth Container */
+        .auth-container {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            z-index: 100;
+        }
+
+        .signed-out-ui {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .auth-notice {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            text-align: center;
+            max-width: 250px;
+        }
+
+        .signed-in-ui {
+            display: none;
+            align-items: center;
+            gap: 12px;
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 50px;
+            padding: 8px 16px 8px 8px;
+        }
+
+        .user-photo {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            border: 2px solid var(--accent-purple);
+        }
+
+        .user-name {
+            font-size: 0.95rem;
+            color: var(--text-primary);
+            font-weight: 500;
+        }
+
+        .sign-out-btn {
+            background: rgba(233, 69, 96, 0.1);
+            color: var(--accent-pink);
+            border: 1px solid var(--accent-pink);
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .sign-out-btn:hover {
+            background: var(--accent-pink);
+            color: white;
+        }
+
+        /* Loading Spinner */
+        .loading-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(13, 13, 26, 0.9);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .spinner {
+            border: 3px solid rgba(255,255,255,0.1);
+            border-top: 3px solid var(--accent-purple);
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .loading-text {
+            color: var(--text-primary);
+            font-size: 1.1rem;
+        }
+
+        /* Error Message */
+        .error-banner {
+            display: none;
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(248, 113, 113, 0.95);
+            color: white;
+            padding: 16px 24px;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            z-index: 1001;
+            align-items: center;
+            gap: 12px;
+            max-width: 500px;
+        }
+
+        .error-icon {
+            font-size: 1.5rem;
+        }
+
         /* Footer */
         .footer {
             text-align: center;
@@ -184,10 +302,57 @@
             .game-card {
                 padding: 30px 20px;
             }
+
+            .auth-container {
+                position: static;
+                display: flex;
+                justify-content: center;
+                margin-bottom: 20px;
+            }
+
+            .signed-in-ui {
+                padding: 6px 12px 6px 6px;
+            }
+
+            .user-name {
+                font-size: 0.85rem;
+                max-width: 150px;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+            }
         }
     </style>
 </head>
 <body>
+    <!-- Auth Status -->
+    <div class="auth-container">
+        <!-- Signed Out UI -->
+        <div id="signedOutUI" class="signed-out-ui">
+            <div id="googleSignInButton"></div>
+            <p class="auth-notice">Sign in to save your progress across devices</p>
+        </div>
+
+        <!-- Signed In UI -->
+        <div id="signedInUI" class="signed-in-ui">
+            <img id="userPhoto" class="user-photo" alt="Profile" src="">
+            <span id="userName" class="user-name"></span>
+            <button id="signOutBtn" class="sign-out-btn">Sign Out</button>
+        </div>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div id="loadingOverlay" class="loading-overlay">
+        <div class="spinner"></div>
+        <div class="loading-text" id="loadingText">Loading...</div>
+    </div>
+
+    <!-- Error Banner -->
+    <div id="errorBanner" class="error-banner">
+        <span class="error-icon">⚠️</span>
+        <span id="errorText"></span>
+    </div>
+
     <div class="container">
         <div class="hero">
             <h1>Focus Games</h1>
@@ -250,6 +415,79 @@
         </div>
     </div>
 
-    <!-- No JavaScript needed - native anchor navigation handles all interactions (click, Ctrl-click, middle-click, etc.) -->
+    <!-- Firebase Scripts -->
+    <script src="firebase-config.js"></script>
+    <script src="firebase-auth.js"></script>
+    <script src="firebase-db.js"></script>
+
+    <script>
+        // Initialize authentication on page load
+        window.addEventListener('DOMContentLoaded', async () => {
+            try {
+                await initAuth();
+
+                // Set up auth state callback
+                onAuthStateChanged((user) => {
+                    if (user) {
+                        showSignedInUI(user);
+                    } else {
+                        showSignedOutUI();
+                    }
+                });
+
+                // Initialize Google Sign-In button
+                await initGoogleSignIn('googleSignInButton');
+
+                // Set up sign-out button
+                document.getElementById('signOutBtn').addEventListener('click', () => {
+                    signOut();
+                });
+
+            } catch (error) {
+                console.error('Initialization error:', error);
+                showError('Failed to initialize authentication. Please refresh the page.');
+            }
+        });
+
+        // Show signed-in UI
+        function showSignedInUI(user) {
+            document.getElementById('signedOutUI').style.display = 'none';
+            document.getElementById('signedInUI').style.display = 'flex';
+            document.getElementById('userPhoto').src = user.photoURL || 'https://via.placeholder.com/40';
+            document.getElementById('userName').textContent = user.displayName || user.email;
+        }
+
+        // Show signed-out UI
+        function showSignedOutUI() {
+            document.getElementById('signedOutUI').style.display = 'flex';
+            document.getElementById('signedInUI').style.display = 'none';
+        }
+
+        // Handle auth loading events
+        window.addEventListener('auth-loading', (e) => {
+            const overlay = document.getElementById('loadingOverlay');
+            if (e.detail.loading) {
+                document.getElementById('loadingText').textContent = 'Signing in...';
+                overlay.style.display = 'flex';
+            } else {
+                overlay.style.display = 'none';
+            }
+        });
+
+        // Handle auth error events
+        window.addEventListener('auth-error', (e) => {
+            showError(e.detail.message);
+        });
+
+        // Show error message
+        function showError(message) {
+            const banner = document.getElementById('errorBanner');
+            document.getElementById('errorText').textContent = message;
+            banner.style.display = 'flex';
+            setTimeout(() => {
+                banner.style.display = 'none';
+            }, 5000);
+        }
+    </script>
 </body>
 </html>

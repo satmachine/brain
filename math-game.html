@@ -222,6 +222,25 @@
             margin-top: 20px;
         }
 
+        .finish-btn {
+            display: block;
+            margin: 30px auto 0;
+            background: var(--accent-pink);
+            color: white;
+            border: none;
+            padding: 12px 40px;
+            border-radius: 50px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .finish-btn:hover {
+            background: #f55c78;
+            transform: scale(1.05);
+        }
+
         @media (max-width: 768px) {
             .container {
                 margin-top: 40px;
@@ -287,7 +306,14 @@
         </div>
 
         <div class="hint">Press Enter to submit your answer</div>
+
+        <button class="finish-btn" id="finish-btn">Finish & Save</button>
     </div>
+
+    <!-- Firebase Scripts -->
+    <script src="firebase-config.js"></script>
+    <script src="firebase-auth.js"></script>
+    <script src="firebase-db.js"></script>
 
     <script>
         let score = 0;
@@ -455,6 +481,67 @@
         // Initialize game
         displayQuestion();
         updateStreakIndicator();
+
+        // Finish button handler
+        document.getElementById('finish-btn').addEventListener('click', async () => {
+            if (!isSignedIn()) {
+                alert('Please sign in to save your progress');
+                return;
+            }
+
+            try {
+                const sessionData = {
+                    timestamp: new Date().toISOString(),
+                    score: score,
+                    level: level,
+                    streak: streak,
+                    totalCorrect: totalCorrect
+                };
+
+                const userData = await readUserData();
+                const mathData = userData.mathGame || { personalBests: {}, sessions: [] };
+
+                const personalBests = {
+                    highScore: Math.max(score, mathData.personalBests.highScore || 0),
+                    highestLevel: Math.max(level, mathData.personalBests.highestLevel || 0),
+                    longestStreak: Math.max(streak, mathData.personalBests.longestStreak || 0),
+                    totalCorrect: (mathData.personalBests.totalCorrect || 0) + totalCorrect,
+                    sessionsPlayed: (mathData.personalBests.sessionsPlayed || 0) + 1,
+                    lastPlayed: new Date().toISOString()
+                };
+
+                await updateGameData('mathGame', sessionData, personalBests);
+
+                alert(`Session saved!\n\nScore: ${score}\nLevel: ${level}\nStreak: ${streak}\n\nPlay again or go back to menu.`);
+
+                // Reset game
+                score = 0;
+                level = 1;
+                streak = 0;
+                totalCorrect = 0;
+                updateDisplay();
+                displayQuestion();
+                updateStreakIndicator();
+
+            } catch (error) {
+                console.error('Failed to save session:', error);
+                alert('Failed to save progress. Please check your connection.');
+            }
+        });
+
+        // Auth check on load
+        (async () => {
+            await initAuth();
+            if (!getCurrentUser()) {
+                document.querySelector('.container').innerHTML = `
+                    <div style="text-align: center; padding: 60px 20px;">
+                        <h2 style="color: var(--accent-pink); margin-bottom: 20px;">Sign In Required</h2>
+                        <p style="color: var(--text-secondary); margin-bottom: 30px;">Please sign in to play and save your progress.</p>
+                        <button class="finish-btn" onclick="window.location.href='index.html'">Go to Home Page</button>
+                    </div>
+                `;
+            }
+        })();
     </script>
 </body>
 </html>

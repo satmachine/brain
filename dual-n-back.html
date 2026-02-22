@@ -276,6 +276,11 @@
         <button id="menu-btn" class="btn-secondary" onclick="window.location.href='index.html'">BACK TO MENU</button>
     </div>
 
+    <!-- Firebase Scripts -->
+    <script src="firebase-config.js"></script>
+    <script src="firebase-auth.js"></script>
+    <script src="firebase-db.js"></script>
+
     <script>
         // --- Game State ---
         const letters = ['A', 'B', 'C', 'D', 'H', 'J', 'K', 'L']; // Distinct sounding letters
@@ -450,6 +455,10 @@
             document.getElementById('final-message').innerText = msg;
 
             showScreen('results-screen');
+
+            // Save session to Firestore
+            saveSession(nLevel, posAcc, audioAcc, score.posHit, score.posMiss, score.posWrong,
+                       score.audioHit, score.audioMiss, score.audioWrong);
         }
 
         // --- Helpers ---
@@ -487,6 +496,60 @@
                 if (e.key.toLowerCase() === 'l' || e.key === 'ArrowRight') handleInput('audio');
             }
         });
+
+        // Save session to Firestore
+        async function saveSession(nLevel, posAcc, audioAcc, posHit, posMiss, posWrong, audioHit, audioMiss, audioWrong) {
+            if (!isSignedIn()) {
+                console.log('Not signed in, skipping save');
+                return;
+            }
+
+            try {
+                const sessionData = {
+                    timestamp: new Date().toISOString(),
+                    nLevel: nLevel,
+                    positionAccuracy: posAcc,
+                    audioAccuracy: audioAcc,
+                    positionHits: posHit,
+                    positionMisses: posMiss,
+                    positionWrong: posWrong,
+                    audioHits: audioHit,
+                    audioMisses: audioMiss,
+                    audioWrong: audioWrong
+                };
+
+                const userData = await readUserData();
+                const dualNBackData = userData.dualNBack || { personalBests: {}, sessions: [] };
+
+                const personalBests = {
+                    highestNLevel: Math.max(nLevel, dualNBackData.personalBests.highestNLevel || 0),
+                    bestPositionAccuracy: Math.max(posAcc, dualNBackData.personalBests.bestPositionAccuracy || 0),
+                    bestAudioAccuracy: Math.max(audioAcc, dualNBackData.personalBests.bestAudioAccuracy || 0),
+                    sessionsPlayed: (dualNBackData.personalBests.sessionsPlayed || 0) + 1,
+                    lastPlayed: new Date().toISOString()
+                };
+
+                await updateGameData('dualNBack', sessionData, personalBests);
+                console.log('Session saved successfully');
+
+            } catch (error) {
+                console.error('Failed to save session:', error);
+            }
+        }
+
+        // Initialize with auth check
+        (async () => {
+            await initAuth();
+            if (!getCurrentUser()) {
+                document.querySelector('.container').innerHTML = `
+                    <div style="text-align: center; padding: 60px 20px;">
+                        <h2 style="color: var(--accent-pink); margin-bottom: 20px;">Sign In Required</h2>
+                        <p style="color: var(--text-secondary); margin-bottom: 30px;">Please sign in to play and save your progress.</p>
+                        <button class="btn" onclick="window.location.href='index.html'">Go to Home Page</button>
+                    </div>
+                `;
+            }
+        })();
 
     </script>
 </body>
