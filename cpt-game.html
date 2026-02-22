@@ -479,6 +479,11 @@
         </div>
     </div>
 
+    <!-- Firebase Scripts -->
+    <script src="firebase-config.js"></script>
+    <script src="firebase-auth.js"></script>
+    <script src="firebase-db.js"></script>
+
     <script>
         const STORAGE_KEY = 'focus-games-cpt';
         const LETTERS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
@@ -503,7 +508,7 @@
         let trialTimeout = null;
         let timeoutIds = [];
 
-        // localStorage functions
+        // Firestore progress functions
         function getDefaultProgress() {
             return {
                 bestDPrime: 0,
@@ -516,25 +521,54 @@
             };
         }
 
-        function loadProgress() {
-            const saved = localStorage.getItem(STORAGE_KEY);
-            return saved ? JSON.parse(saved) : getDefaultProgress();
+        async function loadProgress() {
+            if (!isSignedIn()) return getDefaultProgress();
+            try {
+                const userData = await readUserData();
+                const gameData = userData.cpt || { personalBests: {} };
+                return gameData.personalBests || getDefaultProgress();
+            } catch (error) {
+                console.error('Failed to load progress:', error);
+                return getDefaultProgress();
+            }
         }
 
-        function saveProgress(data) {
-            const current = loadProgress();
-            const updated = {
-                ...current,
-                bestDPrime: Math.max(current.bestDPrime, data.dPrime),
-                bestHitRate: Math.max(current.bestHitRate, data.hitRate),
-                lowestFalseAlarmRate: Math.min(current.lowestFalseAlarmRate, data.falseAlarmRate),
-                bestAccuracy: Math.max(current.bestAccuracy, data.accuracy),
-                fastestAvgRT: Math.min(current.fastestAvgRT === Infinity ? data.avgRT : current.fastestAvgRT, data.avgRT),
-                sessionsPlayed: current.sessionsPlayed + 1,
-                lastPlayed: Date.now()
-            };
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
-            return updated;
+        async function saveProgress(data) {
+            if (!isSignedIn()) {
+                console.log('Not signed in, skipping save');
+                return getDefaultProgress();
+            }
+            try {
+                const userData = await readUserData();
+                const gameData = userData.cpt || { personalBests: {}, sessions: [] };
+                const current = gameData.personalBests || getDefaultProgress();
+
+                const sessionData = {
+                    timestamp: new Date().toISOString(),
+                    dPrime: data.dPrime,
+                    hitRate: data.hitRate,
+                    falseAlarmRate: data.falseAlarmRate,
+                    accuracy: data.accuracy,
+                    avgRT: data.avgRT
+                };
+
+                const updated = {
+                    bestDPrime: Math.max(current.bestDPrime || 0, data.dPrime),
+                    bestHitRate: Math.max(current.bestHitRate || 0, data.hitRate),
+                    lowestFalseAlarmRate: Math.min(current.lowestFalseAlarmRate || 100, data.falseAlarmRate),
+                    bestAccuracy: Math.max(current.bestAccuracy || 0, data.accuracy),
+                    fastestAvgRT: Math.min(current.fastestAvgRT === Infinity ? data.avgRT : current.fastestAvgRT, data.avgRT),
+                    sessionsPlayed: (current.sessionsPlayed || 0) + 1,
+                    lastPlayed: new Date().toISOString()
+                };
+
+                await updateGameData('cpt', sessionData, updated);
+                console.log('Progress saved to Firestore');
+                return updated;
+            } catch (error) {
+                console.error('Failed to save progress:', error);
+                return getDefaultProgress();
+            }
         }
 
         function displayPersonalBest(currentDPrime, savedProgress) {
@@ -722,7 +756,7 @@
             }, 100));
         }
 
-        function endGame() {
+        async function endGame() {
             isGameActive = false;
             clearAllTimeouts();
 
@@ -736,7 +770,7 @@
             const dPrime = calculateDPrime(hits, misses, falseAlarms, correctRejections);
 
             // Save progress
-            const savedProgress = saveProgress({
+            const savedProgress = await saveProgress({
                 dPrime: dPrime,
                 hitRate: hitRate,
                 falseAlarmRate: faRate,
@@ -816,8 +850,53 @@
             }
         });
 
+        // Migrate localStorage data
+        async function migrateLocalStorageData() {
+            const localData = localStorage.getItem(STORAGE_KEY);
+            if (!localData) return false;
+            try {
+                const parsed = JSON.parse(localData);
+                const sessionData = {
+                    timestamp: parsed.lastPlayed ? new Date(parsed.lastPlayed).toISOString() : new Date().toISOString(),
+                    dPrime: parsed.bestDPrime || 0,
+                    hitRate: parsed.bestHitRate || 0,
+                    falseAlarmRate: parsed.lowestFalseAlarmRate || 100,
+                    accuracy: parsed.bestAccuracy || 0,
+                    avgRT: parsed.fastestAvgRT || 0
+                };
+                await updateGameData('cpt', sessionData, parsed);
+                localStorage.removeItem(STORAGE_KEY);
+                console.log('LocalStorage migrated successfully');
+                return true;
+            } catch (error) {
+                console.error('Failed to migrate localStorage:', error);
+                return false;
+            }
+        }
+
         // Initialize countdown on page load
-        document.addEventListener('DOMContentLoaded', () => {
+        document.addEventListener('DOMContentLoaded', async () => {
+            await initAuth();
+            if (!getCurrentUser()) {
+                document.querySelector('.container').innerHTML = `
+                    <div style="text-align: center; padding: 60px 20px;">
+                        <h2 style="color: var(--accent-pink); margin-bottom: 20px;">Sign In Required</h2>
+                        <p style="color: var(--text-secondary); margin-bottom: 30px;">Please sign in to play and save your progress.</p>
+                        <a href="index.html" style="display: inline-block; background: var(--accent-pink); color: white; padding: 12px 40px; border-radius: 50px; text-decoration: none; font-weight: 600;">Go to Home Page</a>
+                    </div>
+                `;
+                return;
+            }
+            const hasLocalData = localStorage.getItem(STORAGE_KEY);
+            if (hasLocalData) {
+                const migrate = confirm('You have local progress data. Would you like to upload it to the cloud?');
+                if (migrate) {
+                    await migrateLocalStorageData();
+                    alert('Your progress has been uploaded to the cloud!');
+                } else {
+                    localStorage.removeItem(STORAGE_KEY);
+                }
+            }
             startCountdown();
         });
 
