@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Focus Games</title>
+    <style>
+        :root {
+            --bg-dark: #0d0d1a;
+            --bg-light: #1a1a2e;
+            --text-primary: #e2e8f0;
+            --text-secondary: #94a3b8;
+            --accent-purple: #a78bfa;
+            --accent-pink: #e94560;
+            --success: #4ade80;
+            --card-bg: rgba(255, 255, 255, 0.05);
+            --card-border: rgba(255, 255, 255, 0.1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background: linear-gradient(135deg, var(--bg-dark) 0%, var(--bg-light) 100%);
+            color: var(--text-primary);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .back-link {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            color: var(--text-primary);
+            text-decoration: none;
+            font-size: 0.9rem;
+            opacity: 0.7;
+            transition: opacity 0.2s;
+        }
+        .back-link:hover {
+            opacity: 1;
+        }
+        .back-link::before {
+            content: '← ';
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 60px auto 0;
+        }
+
+        /* Header */
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .header h1 {
+            font-size: 3rem;
+            font-weight: 800;
+            margin-bottom: 16px;
+            background: linear-gradient(135deg, var(--accent-purple), var(--accent-pink));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .user-profile {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .user-photo {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            border: 3px solid var(--accent-purple);
+        }
+
+        .user-info {
+            text-align: left;
+        }
+
+        .user-name {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .user-email {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
+
+        /* Overall Stats */
+        .overall-stats {
+            background: var(--card-bg);
+            border: 2px solid var(--card-border);
+            border-radius: 20px;
+            padding: 40px;
+            margin-bottom: 40px;
+        }
+
+        .overall-stats h2 {
+            font-size: 1.75rem;
+            margin-bottom: 30px;
+            color: var(--accent-purple);
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+        }
+
+        .stat-box {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 20px;
+            border-radius: 12px;
+            text-align: center;
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            margin-bottom: 10px;
+        }
+
+        .stat-value {
+            font-size: 2.5rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--accent-purple), var(--accent-pink));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        /* Game Cards */
+        .games-section {
+            margin-bottom: 40px;
+        }
+
+        .games-section h2 {
+            font-size: 1.75rem;
+            margin-bottom: 20px;
+            color: var(--accent-purple);
+        }
+
+        .game-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+
+        .game-card {
+            background: var(--card-bg);
+            border: 2px solid var(--card-border);
+            border-radius: 15px;
+            padding: 25px;
+            transition: transform 0.2s;
+        }
+
+        .game-card:hover {
+            transform: translateY(-4px);
+            border-color: var(--accent-purple);
+        }
+
+        .game-card-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .game-icon {
+            font-size: 2rem;
+        }
+
+        .game-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+        }
+
+        .game-stats {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .game-stat {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.9rem;
+        }
+
+        .game-stat-label {
+            color: var(--text-secondary);
+        }
+
+        .game-stat-value {
+            color: var(--success);
+            font-weight: 600;
+        }
+
+        .no-data {
+            color: var(--text-secondary);
+            font-style: italic;
+            text-align: center;
+            padding: 20px;
+        }
+
+        /* Loading */
+        .loading {
+            text-align: center;
+            padding: 60px 20px;
+        }
+
+        .spinner {
+            border: 3px solid rgba(255,255,255,0.1);
+            border-top: 3px solid var(--accent-purple);
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2rem;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+
+            .game-cards {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <a href="index.html" class="back-link">Back to Menu</a>
+
+    <div class="container">
+        <div class="header">
+            <h1>📊 Your Dashboard</h1>
+            <div class="user-profile">
+                <img id="userPhoto" class="user-photo" alt="Profile">
+                <div class="user-info">
+                    <div class="user-name" id="userName"></div>
+                    <div class="user-email" id="userEmail"></div>
+                </div>
+            </div>
+        </div>
+
+        <div id="loading" class="loading">
+            <div class="spinner"></div>
+            <p>Loading your progress...</p>
+        </div>
+
+        <div id="content" style="display: none;">
+            <!-- Overall Stats -->
+            <div class="overall-stats">
+                <h2>Overall Progress</h2>
+                <div class="stats-grid">
+                    <div class="stat-box">
+                        <div class="stat-label">Total Sessions</div>
+                        <div class="stat-value" id="totalSessions">0</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-label">Games Played</div>
+                        <div class="stat-value" id="gamesPlayed">0</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-label">Last Active</div>
+                        <div class="stat-value" id="lastActive" style="font-size: 1.5rem;">-</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Game Cards -->
+            <div class="games-section">
+                <h2>Personal Bests by Game</h2>
+                <div class="game-cards" id="gameCards"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Firebase Scripts -->
+    <script src="firebase-config.js"></script>
+    <script src="firebase-auth.js"></script>
+    <script src="firebase-db.js"></script>
+
+    <script>
+        const GAME_CONFIG = {
+            typing: {
+                icon: '⌨️',
+                title: 'Typing Speed Test',
+                stats: [
+                    { label: 'Highest WPM', key: 'highestWPM', format: v => v },
+                    { label: 'Best Accuracy', key: 'bestAccuracy', format: v => v + '%' },
+                    { label: 'Sessions Played', key: 'sessionsPlayed', format: v => v }
+                ]
+            },
+            dualNBack: {
+                icon: '🧠',
+                title: 'Dual N-Back',
+                stats: [
+                    { label: 'Highest N-Level', key: 'highestNLevel', format: v => v },
+                    { label: 'Best Position Accuracy', key: 'bestPositionAccuracy', format: v => v + '%' },
+                    { label: 'Best Audio Accuracy', key: 'bestAudioAccuracy', format: v => v + '%' },
+                    { label: 'Sessions Played', key: 'sessionsPlayed', format: v => v }
+                ]
+            },
+            mathGame: {
+                icon: '🔢',
+                title: 'Math Challenge',
+                stats: [
+                    { label: 'High Score', key: 'highScore', format: v => v },
+                    { label: 'Highest Level', key: 'highestLevel', format: v => v },
+                    { label: 'Longest Streak', key: 'longestStreak', format: v => v },
+                    { label: 'Sessions Played', key: 'sessionsPlayed', format: v => v }
+                ]
+            },
+            speedProcessing: {
+                icon: '👁️',
+                title: 'Speed of Processing',
+                stats: [
+                    { label: 'High Score', key: 'highScore', format: v => v },
+                    { label: 'Best Accuracy', key: 'bestAccuracy', format: v => v + '%' },
+                    { label: 'Fastest Avg RT', key: 'fastestAvgRT', format: v => v + 'ms' },
+                    { label: 'Level Reached', key: 'levelReached', format: v => v }
+                ]
+            },
+            stroop: {
+                icon: '🎨',
+                title: 'Stroop Task',
+                stats: [
+                    { label: 'High Score', key: 'highScore', format: v => v },
+                    { label: 'Best Accuracy', key: 'bestAccuracy', format: v => v + '%' },
+                    { label: 'Best Streak', key: 'bestStreak', format: v => v },
+                    { label: 'Fastest Avg RT', key: 'fastestAvgRT', format: v => v + 'ms' }
+                ]
+            },
+            cpt: {
+                icon: '🎯',
+                title: 'Continuous Performance',
+                stats: [
+                    { label: 'Best d-prime', key: 'bestDPrime', format: v => v.toFixed(2) },
+                    { label: 'Best Hit Rate', key: 'bestHitRate', format: v => v.toFixed(1) + '%' },
+                    { label: 'Lowest False Alarm Rate', key: 'lowestFalseAlarmRate', format: v => v.toFixed(1) + '%' },
+                    { label: 'Best Accuracy', key: 'bestAccuracy', format: v => v.toFixed(1) + '%' }
+                ]
+            },
+            taskSwitching: {
+                icon: '🔀',
+                title: 'Task Switching',
+                stats: [
+                    { label: 'High Score', key: 'highScore', format: v => v },
+                    { label: 'Lowest Switch Cost', key: 'lowestSwitchCost', format: v => v + 'ms' },
+                    { label: 'Best Accuracy', key: 'bestAccuracy', format: v => v + '%' },
+                    { label: 'Level Reached', key: 'levelReached', format: v => v }
+                ]
+            }
+        };
+
+        async function loadDashboard() {
+            try {
+                await initAuth();
+
+                const user = getCurrentUser();
+                if (!user) {
+                    window.location.href = 'index.html';
+                    return;
+                }
+
+                // Display user info
+                document.getElementById('userPhoto').src = user.photoURL || 'https://via.placeholder.com/60';
+                document.getElementById('userName').textContent = user.displayName || 'User';
+                document.getElementById('userEmail').textContent = user.email;
+
+                // Load user data
+                const userData = await readUserData();
+
+                // Calculate overall stats
+                let totalSessions = 0;
+                let gamesPlayed = 0;
+                let lastActive = null;
+
+                const gameNames = Object.keys(GAME_CONFIG);
+                gameNames.forEach(gameName => {
+                    const gameData = userData[gameName];
+                    if (gameData && gameData.personalBests) {
+                        const sessions = gameData.personalBests.sessionsPlayed || 0;
+                        if (sessions > 0) {
+                            totalSessions += sessions;
+                            gamesPlayed++;
+
+                            const lastPlayed = gameData.personalBests.lastPlayed;
+                            if (lastPlayed) {
+                                const date = new Date(lastPlayed);
+                                if (!lastActive || date > lastActive) {
+                                    lastActive = date;
+                                }
+                            }
+                        }
+                    }
+                });
+
+                document.getElementById('totalSessions').textContent = totalSessions;
+                document.getElementById('gamesPlayed').textContent = gamesPlayed + '/7';
+
+                if (lastActive) {
+                    const now = new Date();
+                    const diffMs = now - lastActive;
+                    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+                    if (diffDays === 0) {
+                        document.getElementById('lastActive').textContent = 'Today';
+                    } else if (diffDays === 1) {
+                        document.getElementById('lastActive').textContent = 'Yesterday';
+                    } else if (diffDays < 7) {
+                        document.getElementById('lastActive').textContent = diffDays + 'd ago';
+                    } else {
+                        document.getElementById('lastActive').textContent = Math.floor(diffDays / 7) + 'w ago';
+                    }
+                } else {
+                    document.getElementById('lastActive').textContent = 'Never';
+                }
+
+                // Render game cards
+                const gameCardsContainer = document.getElementById('gameCards');
+                gameCardsContainer.innerHTML = '';
+
+                gameNames.forEach(gameName => {
+                    const config = GAME_CONFIG[gameName];
+                    const gameData = userData[gameName];
+                    const personalBests = gameData?.personalBests || {};
+
+                    const card = document.createElement('div');
+                    card.className = 'game-card';
+
+                    let statsHTML = '';
+                    const hasData = personalBests.sessionsPlayed > 0;
+
+                    if (hasData) {
+                        config.stats.forEach(stat => {
+                            const value = personalBests[stat.key];
+                            if (value !== undefined && value !== null && value !== Infinity) {
+                                statsHTML += `
+                                    <div class="game-stat">
+                                        <span class="game-stat-label">${stat.label}:</span>
+                                        <span class="game-stat-value">${stat.format(value)}</span>
+                                    </div>
+                                `;
+                            }
+                        });
+                    } else {
+                        statsHTML = '<div class="no-data">No sessions yet - play to see your stats!</div>';
+                    }
+
+                    card.innerHTML = `
+                        <div class="game-card-header">
+                            <div class="game-icon">${config.icon}</div>
+                            <div class="game-title">${config.title}</div>
+                        </div>
+                        <div class="game-stats">
+                            ${statsHTML}
+                        </div>
+                    `;
+
+                    gameCardsContainer.appendChild(card);
+                });
+
+                // Show content, hide loading
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('content').style.display = 'block';
+
+            } catch (error) {
+                console.error('Failed to load dashboard:', error);
+                document.getElementById('loading').innerHTML = `
+                    <p style="color: var(--accent-pink);">Failed to load dashboard. Please try again.</p>
+                    <a href="index.html" style="color: var(--accent-purple);">Go to Home Page</a>
+                `;
+            }
+        }
+
+        // Load dashboard on page load
+        loadDashboard();
+    </script>
+</body>
+</html>

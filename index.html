@@ -408,6 +408,13 @@
                 <p>Build mental flexibility by rapidly alternating between cognitive tasks. Train executive function and reduce your "switch cost".</p>
                 <button class="play-btn">Play Now</button>
             </a>
+
+            <a href="dashboard.html" class="game-card" id="dashboard-card" style="display: none;">
+                <div class="game-icon">📊</div>
+                <h2>Your Dashboard</h2>
+                <p>View your progress, personal bests, and session history across all brain training games. Track your cognitive improvement over time.</p>
+                <button class="play-btn" style="background: var(--accent-purple);">View Stats</button>
+            </a>
         </div>
 
         <div class="footer">
@@ -455,12 +462,18 @@
             document.getElementById('signedInUI').style.display = 'flex';
             document.getElementById('userPhoto').src = user.photoURL || 'https://via.placeholder.com/40';
             document.getElementById('userName').textContent = user.displayName || user.email;
+            // Show dashboard card
+            const dashboardCard = document.getElementById('dashboard-card');
+            if (dashboardCard) dashboardCard.style.display = 'flex';
         }
 
         // Show signed-out UI
         function showSignedOutUI() {
             document.getElementById('signedOutUI').style.display = 'flex';
             document.getElementById('signedInUI').style.display = 'none';
+            // Hide dashboard card
+            const dashboardCard = document.getElementById('dashboard-card');
+            if (dashboardCard) dashboardCard.style.display = 'none';
         }
 
         // Handle auth loading events

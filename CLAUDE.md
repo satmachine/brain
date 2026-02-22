@@ -21,7 +21,8 @@
 
 ```
 /focus/
-├── index.html                  # Main landing page with game cards
+├── index.html                  # Main landing page with game cards + Google Sign-In
+├── dashboard.html              # Unified stats dashboard (all 7 games)
 ├── typing-game.html            # Typing speed test with classic literature
 ├── dual-n-back.html            # Dual N-Back working memory trainer
 ├── math-game.html              # Mental arithmetic challenge game
@@ -29,6 +30,9 @@
 ├── stroop-task.html            # Color-word interference task
 ├── cpt-game.html               # Continuous Performance Test
 ├── task-switching.html         # Mental flexibility training
+├── firebase-config.js          # Firebase project configuration
+├── firebase-auth.js            # Google Sign-In authentication (REST API)
+├── firebase-db.js              # Firestore database operations (REST API)
 ├── paragraphs.json             # Classic literature excerpts (71 entries)
 ├── CNAME                       # Custom domain configuration
 └── CLAUDE.md                  # This file - project documentation
@@ -40,6 +44,8 @@
 - **Purpose**: Landing page showcasing all available brain training games
 - **Design**: Hero section + responsive grid of game cards
 - **Navigation**: Cards link to individual game pages
+- **Authentication**: Google Sign-In button (top-right), user profile display, sign-out
+- **Dashboard Link**: Shows "Your Dashboard" card when user is signed in
 - **Games Featured** (7 total):
   - Dual N-Back (🧠) - Working memory training
   - Typing Speed Test (⌨️) - WPM tracking with literature
@@ -48,6 +54,17 @@
   - Stroop Task (🎨) - Attention control via color-word interference
   - Continuous Performance (🎯) - Sustained attention assessment
   - Task Switching (🔀) - Mental flexibility training
+
+#### `dashboard.html`
+- **Purpose**: Unified statistics dashboard showing progress across all 7 games
+- **Features**:
+  - User profile display (photo, name, email)
+  - Overall stats: total sessions, games played, last active date
+  - Per-game cards showing personal bests
+  - Responsive grid layout
+  - Real-time data loading from Firestore
+- **Authentication**: Requires sign-in, redirects to index.html if not authenticated
+- **Data Source**: Reads entire user document from Firestore via `readUserData()`
 
 #### `typing-game.html`
 - **Purpose**: Typing speed test with real-time WPM and accuracy tracking
@@ -169,65 +186,97 @@
 - Reduced font sizes and padding
 - Touch-friendly button sizes (min 44px tap targets)
 
-### Data Persistence (localStorage)
+### Firebase & Cloud Storage
 
-**Implementation Pattern:**
+**Overview:**
 
-All 4 research-backed games (Speed of Processing, Stroop, CPT, Task Switching) use localStorage to track personal bests and session history across browser sessions.
+All 7 games use **Firebase Firestore** for cloud-based progress tracking with **Google Sign-In** authentication. Zero-dependency implementation using Firebase REST APIs (no SDK).
 
-**localStorage Keys:**
-- `focus-games-speed-processing`: Speed of Processing game data
-- `focus-games-stroop`: Stroop Task game data
-- `focus-games-cpt`: Continuous Performance Test data
-- `focus-games-task-switching`: Task Switching game data
+**Key Features:**
+- Cross-device sync (access progress from any device)
+- Session history (last 30 sessions per game)
+- Personal bests tracking
+- Automatic localStorage migration for existing users
+- Privacy-focused (user data only, no tracking)
 
-**Stored Data Structure:**
+**Architecture:**
 
-```javascript
-{
-  // Universal fields (all games)
-  sessionsPlayed: number,
-  lastPlayed: timestamp,
-
-  // Game-specific metrics
-  highScore: number,              // Speed, Stroop, Task Switch
-  bestAccuracy: number,           // All games
-
-  // Speed of Processing
-  fastestAvgRT: number,
-  levelReached: number,
-
-  // Stroop Task
-  bestStreak: number,
-  fastestAvgRT: number,
-  levelReached: number,
-
-  // CPT
-  bestDPrime: number,             // Key metric: sensitivity
-  bestHitRate: number,
-  lowestFalseAlarmRate: number,
-  fastestAvgRT: number,
-
-  // Task Switching
-  lowestSwitchCost: number,       // Key metric: RT difference
-  bestRepeatRT: number,
-  bestSwitchRT: number,
-  levelReached: number
-}
+```
+┌─────────────────────────────────────────────────┐
+│ User → Google Sign-In → Firebase Auth           │
+│   ↓                                              │
+│ Games → Firestore REST API → Cloud Database     │
+│   ↓                                              │
+│ Dashboard → Reads all game data → Display       │
+└─────────────────────────────────────────────────┘
 ```
 
-**Display Pattern:**
+**Core Files:**
 
-- Personal bests shown on results screen after each session
-- New records highlighted with 🏆 icon and success color (green)
-- Previous bests shown in muted text if not beaten
-- First-time players see initialized default values
+1. **firebase-config.js** - Project configuration and API keys
+2. **firebase-auth.js** - Google Sign-In implementation (REST API)
+3. **firebase-db.js** - Firestore read/write operations (REST API)
+
+**Firestore Data Structure:**
+
+```
+users/{userId}/
+  ├─ profile: { email, displayName, photoURL, createdAt }
+  ├─ typing: { personalBests, sessions[] }
+  ├─ dualNBack: { personalBests, sessions[] }
+  ├─ mathGame: { personalBests, sessions[] }
+  ├─ speedProcessing: { personalBests, sessions[] }
+  ├─ stroop: { personalBests, sessions[] }
+  ├─ cpt: { personalBests, sessions[] }
+  └─ taskSwitching: { personalBests, sessions[] }
+```
+
+**Session Data:**
+
+Each game stores the last 30 sessions with metrics like:
+- Timestamp
+- Score/accuracy
+- Reaction times
+- Game-specific metrics (WPM, N-level, d-prime, switch cost, etc.)
+
+**Personal Bests Tracked:**
+
+| Game | Metrics |
+|------|---------|
+| Typing | highestWPM, bestAccuracy, fastestTime |
+| Dual N-Back | highestNLevel, bestPositionAccuracy, bestAudioAccuracy |
+| Math | highScore, highestLevel, longestStreak |
+| Speed Processing | highScore, bestAccuracy, fastestAvgRT, levelReached |
+| Stroop | highScore, bestAccuracy, bestStreak, fastestAvgRT |
+| CPT | bestDPrime, bestHitRate, lowestFalseAlarmRate, bestAccuracy |
+| Task Switching | highScore, lowestSwitchCost, bestAccuracy, bestRepeatRT, bestSwitchRT |
+
+**Authentication Flow:**
+
+1. User clicks "Sign in with Google" on index.html
+2. Google Identity Services popup appears
+3. User authenticates with Google account
+4. Receive Google ID token → exchange for Firebase auth token
+5. Store auth state in sessionStorage
+6. Enable game access and data sync
+
+**Security:**
+
+- Firestore security rules: Users can only read/write their own data
+- No service account keys in client code
+- sessionStorage for auth persistence (cleared on browser close)
+- No sensitive data stored
+
+**localStorage Migration:**
+
+On first sign-in, users with existing localStorage data (Speed Processing, Stroop, CPT, Task Switching) are prompted to upload their data to the cloud. After migration, localStorage is cleared.
 
 **Privacy:**
 
-- All data stored locally in browser (no server communication)
-- Users can clear data via browser settings
-- No tracking, no cookies, no external requests
+- User data encrypted in transit (HTTPS)
+- No external tracking or analytics
+- Data owned by user (can be deleted via Firebase Console)
+- No data sharing with third parties
 
 ## Development Workflow
 
