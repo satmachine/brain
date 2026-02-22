@@ -431,9 +431,7 @@
         // Initialize authentication on page load
         window.addEventListener('DOMContentLoaded', async () => {
             try {
-                await initAuth();
-
-                // Set up auth state callback
+                // Set up auth state callback BEFORE initAuth
                 onAuthStateChanged((user) => {
                     if (user) {
                         showSignedInUI(user);
@@ -442,8 +440,12 @@
                     }
                 });
 
-                // Initialize Google Sign-In button
-                await initGoogleSignIn('googleSignInButton');
+                await initAuth();
+
+                // Initialize Google Sign-In button only if not already signed in
+                if (!isSignedIn()) {
+                    await initGoogleSignIn('googleSignInButton');
+                }
 
                 // Set up sign-out button
                 document.getElementById('signOutBtn').addEventListener('click', () => {
